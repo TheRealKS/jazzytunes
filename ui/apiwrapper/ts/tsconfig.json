@@ -1,0 +1,14 @@
+{
+    "compilerOptions" : {
+        "outFile": "../js/script.js",
+        "pretty": true,
+        "target": "es6",
+        "module": "commonjs",
+        "jsx": "react",
+        "sourceMap": true,
+        "noImplicitAny": true
+    },
+    "include": [
+        "*"
+    ]
+}

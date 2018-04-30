@@ -1,0 +1,25 @@
+{
+  "name": "jazzytunes",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron --debug=12345 .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "TheRealKS",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^1.8.4",
+    "gulp": "^3.9.1",
+    "pump": "^3.0.0"
+  },
+  "dependencies": {
+    "@types/react": "^16.3.13",
+    "@types/react-dom": "^16.0.5",
+    "@types/spotify-web-playback-sdk": "^0.1.2",
+    "react": "^16.3.2",
+    "react-dom": "^16.3.2"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "jazzytunes",
+  "short_name": "jazzytunes",
+  "start_url": "/",
+  "display": "standalone"
+}
