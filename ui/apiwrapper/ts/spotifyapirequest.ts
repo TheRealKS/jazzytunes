@@ -92,6 +92,88 @@ class SpotifyApiGetRequest {
     }
 }
 
+class SpotifyApiPutRequest {
+    baseURL = "https://api.spotify.com/v1/"; //Base URL all requests use
+    url : string;
+    body : Array<string>
+    bodyJson = true;
+    result : SpotifyApiRequestResult;
+    constructor(bodyJson? : boolean) {
+        this.bodyJson = bodyJson;
+    }
+
+    /**
+     * Converts the provided Array of body elements to a valid body string for the request
+     * 
+     * @param bodyElements Body elements as a key/value array
+     * @returns A valid URLSearchParams encoded string for the elements
+     * @description Only to be called internally, usually not necessary as most request require a json type encoding for the body
+     */
+
+    createBody(bodyElements : Array<any>) {
+        let body = new URLSearchParams();
+        for (var name in bodyElements) {
+            body.append(name, bodyElements[name]);
+        }
+        return body.toString();
+    }
+
+    /**
+     * Converts the provided options to a url
+     * 
+     * @param options Options as a key/value array
+     * @returns The encoded URL component for the options
+     * @description Only to be called internally
+     */
+
+    parseOptions(options : Array<Object>) {
+        let optionsString : string = "";
+        let keys = options.keys();
+        let l = options.length;
+        for (var i = 0; i < l; i++) {
+            let str = keys[i] + "=" + options[i];
+            str += i < l - 1 ? "&" : "";
+            optionsString += str;
+        }
+        return optionsString;
+    }
+
+    /**
+     * Executes the request
+     * 
+     * @param callback The function this function was orignally called from.
+     * @returns The result of the request as a parameter to the callback parameter.
+     */
+
+    execute(callback : Function) {
+        fetch(this.url, {
+            method: "PUT",
+            headers: {
+                Authorization: "Bearer " + credentials.getAccessToken(),
+                "Content-Type": "application/json"
+            },
+            body: this.bodyJson ? JSON.stringify(this.body) : this.createBody(this.body)
+        })
+        .then(function(res) {
+            if (res.ok) {
+                return res.json();
+            } else {
+                alert("Error!");
+            }
+        })
+        .then(function(json) {
+            let result : SpotifyApiRequestResult;
+            if (json.error) {
+                //OOPS
+                result = new SpotifyApiRequestResult(RequestStatus.ERROR, json.error, json.error_description);
+            } else {
+                result = new SpotifyApiRequestResult(RequestStatus.RESOLVED, json);
+            }
+            callback(result);
+        });
+    }
+}
+
 //SECTION: All the subclasses for individual types of requests
 
 //SUBSECTION: Subclasses to retrieve data related to albums
@@ -381,5 +463,30 @@ class SpotifyApiFollowingContainsRequest extends SpotifyApiGetRequest {
         super();
         this.url = this.baseURL + "me/following/contains?" + this.parseOptions(options);
     }
+}
+
+/**
+ * Used to check if one or more users follow a playlist
+ * 
+ * @class
+ * @extends SpotifyApiRequest
+ */
+
+class SpotifyApiFollowPlaylistCheckRequest extends SpotifyApiGetRequest {
+    /**
+     * @constructs SpotifyApiFollowPlaylistCheckRequest
+     * @param owner_id Spotify ID of the owner of the playlist
+     * @param playlist_id Spotify ID of the playlist
+     * @param ids Array of Spotify IDs of users to check if they follow the playlist
+     */
+    constructor(owner_id : string, playlist_id : string, ids : Array<string>) {
+        super();
+        let joinedids = ids.join(",");
+        this.url = this.baseURL + "users/" + owner_id + "/playlists/" + playlist_id + "/followers/contains?" + joinedids;
+    }
+}
+
+class SpotifyApiFollowRequest extends SpotifyApiPutRequest {
+    constructor(type : )
 }
 

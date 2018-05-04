@@ -15,5 +15,4 @@ window.onSpotifyWebPlaybackSDKReady = () => {
 };
 
 function initializePlayerUI(player : Spotify.SpotifyPlayer) {
-
 }

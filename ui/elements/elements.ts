@@ -1,5 +1,4 @@
 //Recreate rel="import" like behaviour
-var imports = [];
 function importElement(elementURI) {
     fetch(elementURI)
     .then((res) => {
@@ -9,5 +8,16 @@ function importElement(elementURI) {
     })
     .then((result) => {
         imports[elementURI] = result.text();
+    });
+}
+
+function importElementList() {
+    fetch("element-list.json").then((res) => {
+        if (res.ok) {
+            return res.json();
+        }
+    })
+    .then(json => {
+        //Loop through JSON to fetch critical components (Player UI and immediate sidebar UI etc.)
     });
 }
