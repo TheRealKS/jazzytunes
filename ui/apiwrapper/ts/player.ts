@@ -1,9 +1,13 @@
-import '@types/spotify-web-playback-sdk';
+///<reference path="../../ts/ui_common.ts" /> 
+//import '@typings/spotify-web-playback-sdk';
+var player : Spotify.SpotifyPlayer;
 window.onSpotifyWebPlaybackSDKReady = () => {
-    var player = new Spotify.Player({
+    return;
+    player = new Spotify.Player({
         name: "JazzyTunes",
         getOAuthToken: cb => {cb(credentials.getAccessToken())}
     });
+
 
     player.on('account_error', ({message}) => {
         alert("The account used to authorize does not have a valid Spotify Premium subscription!");
@@ -15,4 +19,6 @@ window.onSpotifyWebPlaybackSDKReady = () => {
 };
 
 function initializePlayerUI(player : Spotify.SpotifyPlayer) {
+    let controller = createSidebarEntry("Playback Controls");
+    
 }

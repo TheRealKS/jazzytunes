@@ -13,10 +13,14 @@
   "devDependencies": {
     "electron": "^1.8.4",
     "gulp": "^3.9.1",
-    "pump": "^3.0.0"
+    "gulp-typescript": "^4.0.2",
+    "gulp-uglify": "^3.0.0",
+    "pump": "^3.0.0",
+    "typescript": "^2.8.3",
+    "uglify-es": "^3.3.9"
   },
   "dependencies": {
-    "@types/react": "^16.3.13",
+    "@types/filesystem": "0.0.28",
     "@types/react-dom": "^16.0.5",
     "@types/spotify-web-playback-sdk": "^0.1.2",
     "react": "^16.3.2",

@@ -91,9 +91,6 @@ function startAuthProcess() {
         handleAuthCodeCallback(newURL);
     });
 }
-window.onload = function () {
-    document.getElementById('authorize').addEventListener("click", startAuthProcess);
-};
 
 function handleAuthCodeCallback(url) {
     var raw_code = raw_code = /code=([^&]*)/.exec(url) || null;

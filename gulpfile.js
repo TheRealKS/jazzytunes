@@ -6,18 +6,32 @@ var pump = require('pump');
 var uglifyjs = require('uglify-es');
 var minify = uglify(uglifyjs, console);
 
+gulp.task('comp-ts', function() {
+    var projects = ['ui/apiwrapper/ts/tsconfig.json', 'ui/ts/tsconfig.json', 'ui/elements/tsconfig.json'];
+    for (var i = 0; i < projects.length - 1; i++) {
+        let tsproj = ts.createProject(projects[i]);
+        tsproj.src()
+            .pipe(tsproj())
+            .pipe(gulp.dest(tsproj.projectDirectory));
+    }
+    let final = ts.createProject(projects[projects.length - 1]);
+    return final.src()
+        .pipe(tsproj())
+        .pipe(gulp.dest(tsproj.projectDirectory));
+});
+
 gulp.task('dev', function() {
     //Compile ts
     return tsproj.src()
-    .pipe(tsproj())
-    .pipe(gulp.dest(tsproj.projectDirectory));
+        .pipe(tsproj())
+        .pipe(gulp.dest(tsproj.projectDirectory));
 });
 
 gulp.task('compress', function(cb) {
     pump([
-        gulp.src('ui/apiwrapper/js/script.js'),
-        minify({toplevel: true}),
-        gulp.dest('dist')
-    ],
-    cb);
+            gulp.src('ui/apiwrapper/js/script.js'),
+            minify({ toplevel: true }),
+            gulp.dest('dist')
+        ],
+        cb);
 });

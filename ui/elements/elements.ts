@@ -1,23 +1,55 @@
-//Recreate rel="import" like behaviour
-function importElement(elementURI) {
-    fetch(elementURI)
-    .then((res) => {
-        if (res.ok) {
-            return res;
+//import * as fs from "fs";
+var fs = require('fs');
+var elementlist : Array<Object>;
+
+//Main startup function
+function setupCustomElements() {
+    getElementList();
+}
+
+function getElementList() {
+    fs.readFile(__dirname + '\\elements/elements-list.json', 'utf-8', (err, data) => {
+        if (err) {
+            return console.error(err);
+            //TODO: throw some other error to the user
         }
-    })
-    .then((result) => {
-        imports[elementURI] = result.text();
+        if (elementlist = JSON.parse(data)) {
+            getCriticalElements();
+        } else {
+            elementlist = [];
+        }
     });
 }
 
-function importElementList() {
-    fetch("element-list.json").then((res) => {
-        if (res.ok) {
-            return res.json();
+function getCriticalElements() {
+    elementlist.forEach(element => {
+        if (element['critical']) {
+            //Element is critical and thus must be preloaded
+            fs.readFile(element['uri'], 'utf-8', (err, data : string) => {
+                if (err) {
+                    return console.error(err);
+                    //TODO: throw some other error to the user
+                }
+                let actualHTML = data.substr(data.indexOf('\n'));
+                registerElement(actualHTML, element['name']);
+            });
         }
-    })
-    .then(json => {
-        //Loop through JSON to fetch critical components (Player UI and immediate sidebar UI etc.)
     });
+}
+
+function registerElement(htmlBody : string, elementName : string) {
+    customElements.define(elementName,
+        class extends HTMLElement {
+            constructor() {
+                super();
+                let doc = document.implementation.createHTMLDocument(elementName);
+                doc.body.innerHTML = htmlBody;
+                let template : HTMLElement = document.getElementById(elementName);
+                let templateContent : Node = template.content;
+                const shadowRoot = this.attachShadow({mode : "open"})
+                .appendChild(templateContent.cloneNode(true));
+            }
+        }
+    );
+    console.log(customElements);
 }

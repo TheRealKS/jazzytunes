@@ -72,9 +72,6 @@ function startAuthProcess() {
         handleAuthCodeCallback(newURL);
     });
 }
-window.onload = function () {
-    document.getElementById('authorize').addEventListener("click", startAuthProcess);
-};
 function handleAuthCodeCallback(url) {
     var raw_code = raw_code = /code=([^&]*)/.exec(url) || null;
     var code = (raw_code && raw_code.length > 1) ? raw_code[1] : null;
@@ -121,9 +118,61 @@ function requestAccesToken(authCode, refresh = false) {
 //All the actions to be executed on window load go here
 window.onload = () => {
     document.getElementById("authorize").addEventListener("click", startAuthProcess);
+    setupCustomElements();
 };
+function createSidebarEntry(name) {
+    let header = document.createElement("sidebar_element_header");
+    let entryName = document.createElement("span");
+    entryName.slot = "header_text";
+    entryName.innerHTML = name;
+    header.appendChild(entryName);
+    header.shadowRoot.childNodes[0].addEventListener("click", (event) => {
+        let target = event.target;
+        let entry = target.parentElement;
+        let childNodes = Array.from(entry.childNodes);
+        if (target.getAttribute("open")) {
+            childNodes.forEach((element, index) => {
+                if (index > 0) {
+                    element.style.display = "none";
+                }
+            });
+            target.style.transform = "rotate(180deg)";
+        }
+        else {
+            childNodes.forEach((element, index) => {
+                if (index > 0) {
+                    element.style.display = "block";
+                }
+            });
+            target.style.transform = "rotate(0deg)";
+        }
+    });
+    let box = document.createElement("div");
+    box.className = "sidebar_entry";
+    box.appendChild(header);
+    return box;
+}
+///<reference path="../../ts/ui_common.ts" /> 
+//import '@typings/spotify-web-playback-sdk';
+var player;
+window.onSpotifyWebPlaybackSDKReady = () => {
+    return;
+    player = new Spotify.Player({
+        name: "JazzyTunes",
+        getOAuthToken: cb => { cb(credentials.getAccessToken()); }
+    });
+    player.on('account_error', ({ message }) => {
+        alert("The account used to authorize does not have a valid Spotify Premium subscription!");
+    });
+    player.connect();
+    initializePlayerUI(player);
+};
+function initializePlayerUI(player) {
+    let controller = createSidebarEntry("Playback Controls");
+}
 //Enum for all the different suburls(scopes) that can be used
 var Scopes;
+//Enum for all the different suburls(scopes) that can be used
 (function (Scopes) {
     Scopes[Scopes["albums"] = 0] = "albums";
     Scopes[Scopes["artists"] = 1] = "artists";
@@ -192,6 +241,80 @@ class SpotifyApiGetRequest {
             .then(function (res) {
             if (res.ok) {
                 //TODO: Further error handling
+                return res.json();
+            }
+            else {
+                alert("Error!");
+            }
+        })
+            .then(function (json) {
+            let result;
+            if (json.error) {
+                //OOPS
+                result = new SpotifyApiRequestResult(RequestStatus.ERROR, json.error, json.error_description);
+            }
+            else {
+                result = new SpotifyApiRequestResult(RequestStatus.RESOLVED, json);
+            }
+            callback(result);
+        });
+    }
+}
+class SpotifyApiPutRequest {
+    constructor(bodyJson) {
+        this.baseURL = "https://api.spotify.com/v1/"; //Base URL all requests use
+        this.bodyJson = true;
+        this.bodyJson = bodyJson;
+    }
+    /**
+     * Converts the provided Array of body elements to a valid body string for the request
+     *
+     * @param bodyElements Body elements as a key/value array
+     * @returns A valid URLSearchParams encoded string for the elements
+     * @description Only to be called internally, usually not necessary as most request require a json type encoding for the body
+     */
+    createBody(bodyElements) {
+        let body = new URLSearchParams();
+        for (var name in bodyElements) {
+            body.append(name, bodyElements[name]);
+        }
+        return body.toString();
+    }
+    /**
+     * Converts the provided options to a url
+     *
+     * @param options Options as a key/value array
+     * @returns The encoded URL component for the options
+     * @description Only to be called internally
+     */
+    parseOptions(options) {
+        let optionsString = "";
+        let keys = options.keys();
+        let l = options.length;
+        for (var i = 0; i < l; i++) {
+            let str = keys[i] + "=" + options[i];
+            str += i < l - 1 ? "&" : "";
+            optionsString += str;
+        }
+        return optionsString;
+    }
+    /**
+     * Executes the request
+     *
+     * @param callback The function this function was orignally called from.
+     * @returns The result of the request as a parameter to the callback parameter.
+     */
+    execute(callback) {
+        fetch(this.url, {
+            method: "PUT",
+            headers: {
+                Authorization: "Bearer " + credentials.getAccessToken(),
+                "Content-Type": "application/json"
+            },
+            body: this.bodyJson ? JSON.stringify(this.body) : this.createBody(this.body)
+        })
+            .then(function (res) {
+            if (res.ok) {
                 return res.json();
             }
             else {
@@ -450,3 +573,40 @@ class SpotifyApiRecommendationsRequest extends SpotifyApiGetRequest {
     }
 }
 //SUBSECTION Subclasses related to following artists, users and playlists
+/**
+ * Used to check if a user is following one or more artists or other users
+ *
+ * @class
+ * @extends SpotifyApiRequest
+ */
+class SpotifyApiFollowingContainsRequest extends SpotifyApiGetRequest {
+    /**
+     * @constructs SpotifyApiFollowingContainsRequest
+     * @param options Option as a key/value array
+     */
+    constructor(options) {
+        super();
+        this.url = this.baseURL + "me/following/contains?" + this.parseOptions(options);
+    }
+}
+/**
+ * Used to check if one or more users follow a playlist
+ *
+ * @class
+ * @extends SpotifyApiRequest
+ */
+class SpotifyApiFollowPlaylistCheckRequest extends SpotifyApiGetRequest {
+    /**
+     * @constructs SpotifyApiFollowPlaylistCheckRequest
+     * @param owner_id Spotify ID of the owner of the playlist
+     * @param playlist_id Spotify ID of the playlist
+     * @param ids Array of Spotify IDs of users to check if they follow the playlist
+     */
+    constructor(owner_id, playlist_id, ids) {
+        super();
+        let joinedids = ids.join(",");
+        this.url = this.baseURL + "users/" + owner_id + "/playlists/" + playlist_id + "/followers/contains?" + joinedids;
+    }
+}
+class SpotifyApiFollowRequest extends SpotifyApiPutRequest {
+}

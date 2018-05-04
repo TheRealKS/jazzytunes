@@ -1,0 +1,35 @@
+#!!!#sidebar-element-header#!!!#critical
+<template id="sidebar-element-header">
+    <style>
+    .header {
+        width: 100%;
+        background-color: black;
+        max-height: 10vh;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        text-align: right;
+    }
+        
+    .header_icon {
+        float: left;
+        margin-left: 5px;
+        cursor: pointer;
+        transition: transform 250ms ease-in-out; 
+    }
+
+    .header_icon:active {
+        color: #424242;
+    }
+
+    .header_text {
+        color: white;
+        display: inline-block;
+        text-align: left;
+        margin-right: 5px;
+    }
+    </style>
+    <div class="header">
+        <i class="material-icons md-light header_icon" open="true">keyboard_arrow_up</i>
+        <slot class="header_text" name="header_text"></slot>
+    </div>
+</template>

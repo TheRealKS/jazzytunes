@@ -3,8 +3,7 @@
         "outFile": "../js/script.js",
         "pretty": true,
         "target": "es6",
-        "module": "commonjs",
-        "jsx": "react",
+        "module": "system",
         "sourceMap": true,
         "noImplicitAny": true
     },

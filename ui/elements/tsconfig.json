@@ -1,0 +1,12 @@
+{
+    "compilerOptions" : {
+        "pretty": true,
+        "module": "amd",
+        "target": "es6",
+        "sourceMap": false,
+        "noImplicitAny": true
+    },
+    "files": [
+        "elements.ts"
+    ]
+}
