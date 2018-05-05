@@ -1,6 +1,6 @@
 //import * as fs from "fs";
 var fs = require('fs');
-var elementlist : Array<Object>;
+var elementlist : Array<Node>;
 
 //Main startup function
 function setupCustomElements() {
@@ -30,7 +30,8 @@ function getCriticalElements() {
                     return console.error(err);
                     //TODO: throw some other error to the user
                 }
-                let actualHTML = data.substr(data.indexOf('\n'));
+                let actualHTML = data.substr(data.indexOf('\n')+1);
+                actualHTML.replace(/\n|\r/g, "");
                 registerElement(actualHTML, element['name']);
             });
         }
@@ -44,12 +45,18 @@ function registerElement(htmlBody : string, elementName : string) {
                 super();
                 let doc = document.implementation.createHTMLDocument(elementName);
                 doc.body.innerHTML = htmlBody;
-                let template : HTMLElement = document.getElementById(elementName);
+                let template : HTMLElement = doc.getElementById(elementName);
                 let templateContent : Node = template.content;
                 const shadowRoot = this.attachShadow({mode : "open"})
                 .appendChild(templateContent.cloneNode(true));
             }
         }
     );
-    console.log(customElements);
+    let el = document.createElement('sidebar-element-header');
+    let span = document.createElement("span");
+    span.slot = "header_text";
+    span.innerHTML = "Playback Controls";
+    span.className = "header_text";
+    el.appendChild(span);
+    document.getElementById("sidebar").appendChild(el);
 }

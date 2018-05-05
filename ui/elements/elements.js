@@ -28,7 +28,8 @@ function getCriticalElements() {
                     return console.error(err);
                     //TODO: throw some other error to the user
                 }
-                let actualHTML = data.substr(data.indexOf('\n'));
+                let actualHTML = data.substr(data.indexOf('\n') + 1);
+                actualHTML.replace(/\n|\r/g, "");
                 registerElement(actualHTML, element['name']);
             });
         }
@@ -40,11 +41,17 @@ function registerElement(htmlBody, elementName) {
             super();
             let doc = document.implementation.createHTMLDocument(elementName);
             doc.body.innerHTML = htmlBody;
-            let template = document.getElementById(elementName);
+            let template = doc.getElementById(elementName);
             let templateContent = template.content;
             const shadowRoot = this.attachShadow({ mode: "open" })
                 .appendChild(templateContent.cloneNode(true));
         }
     });
-    console.log(customElements);
+    let el = document.createElement('sidebar-element-header');
+    let span = document.createElement("span");
+    span.slot = "header_text";
+    span.innerHTML = "Playback Controls";
+    span.className = "header_text";
+    el.appendChild(span);
+    document.getElementById("sidebar").appendChild(el);
 }
