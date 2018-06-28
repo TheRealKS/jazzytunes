@@ -65,7 +65,10 @@ function startAuthProcess() {
     var scopes = [
         'streaming',
         'user-library-read',
-        'user-library-modify'
+        'user-library-modify',
+        "user-read-birthdate", 
+        "user-read-email",
+        "user-read-private"
     ];
     var scopesstr = scopes.join(" ");
     scopesstr = encodeURIComponent(scopesstr);
@@ -133,5 +136,6 @@ function requestAccesToken(authCode : string, refresh : boolean = false) {
         } else {
             credentials.expiringCredentials = cred;
         }
+        initPlayer();
     });
 }

@@ -51,7 +51,10 @@ function startAuthProcess() {
     var scopes = [
         'streaming',
         'user-library-read',
-        'user-library-modify'
+        'user-library-modify',
+        "user-read-birthdate",
+        "user-read-email",
+        "user-read-private"
     ];
     var scopesstr = scopes.join(" ");
     scopesstr = encodeURIComponent(scopesstr);
@@ -113,6 +116,7 @@ function requestAccesToken(authCode, refresh = false) {
         else {
             credentials.expiringCredentials = cred;
         }
+        initPlayer();
     });
 }
 //All the actions to be executed on window load go here
@@ -155,20 +159,25 @@ function createSidebarEntry(name) {
 ///<reference path="../../ts/ui_common.ts" /> 
 //import '@typings/spotify-web-playback-sdk';
 var player;
-window.onSpotifyWebPlaybackSDKReady = () => {
-    return;
-    player = new Spotify.Player({
-        name: "JazzyTunes",
-        getOAuthToken: cb => { cb(credentials.getAccessToken()); }
-    });
-    player.on('account_error', ({ message }) => {
-        alert("The account used to authorize does not have a valid Spotify Premium subscription!");
-    });
-    player.connect();
-    initializePlayerUI(player);
-};
+function initPlayer() {
+    //At this point, auth should be complete and usable
+    let script = document.createElement("script");
+    script.src = "https://sdk.scdn.co/spotify-player.js";
+    document.body.appendChild(script);
+    window.onSpotifyWebPlaybackSDKReady = () => {
+        player = new Spotify.Player({
+            name: "JazzyTunes",
+            getOAuthToken: cb => { cb(credentials.getAccessToken()); }
+        });
+        player.on('account_error', ({ message }) => {
+            alert("The account used to authorize does not have a valid Spotify Premium subscription!");
+        });
+        player.connect();
+        initializePlayerUI(player);
+    };
+}
 function initializePlayerUI(player) {
-    let controller = createSidebarEntry("Playback Controls");
+    //let controller = createSidebarEntry("Playback Controls");
 }
 //Enum for all the different suburls(scopes) that can be used
 var Scopes;
@@ -610,3 +619,4 @@ class SpotifyApiFollowPlaylistCheckRequest extends SpotifyApiGetRequest {
 }
 class SpotifyApiFollowRequest extends SpotifyApiPutRequest {
 }
+//# sourceMappingURL=script.js.map
