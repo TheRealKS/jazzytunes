@@ -30,7 +30,7 @@ gulp.task('dev', function() {
 gulp.task('compress', function(cb) {
     pump([
             gulp.src('ui/apiwrapper/js/script.js'),
-            minify({ toplevel: true }),
+            minify({ toplevel: true, compress: {unused: false}}),
             gulp.dest('dist')
         ],
         cb);
