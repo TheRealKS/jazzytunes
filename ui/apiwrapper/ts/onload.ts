@@ -1,5 +1,4 @@
 //All the actions to be executed on window load go here
-window.onload = () => {
+document.addEventListener("dom:loaded", function(){
     document.getElementById("authorize").addEventListener("click", startAuthProcess);
-    setupCustomElements();
-}
+});

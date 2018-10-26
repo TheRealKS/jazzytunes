@@ -7,39 +7,16 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/common.css">
     <script src="elements/elements.js"></script>
-    <script src="apiwrapper/js/script.js"></script>
+    <script src="dist/script.js"></script>
 </head>
 
 <body>
     <div class="sidebar" id="sidebar">
-        <div class="sidebar_entry">
-            <div class="header">
-                <i class="material-icons md-light header_icon">keyboard_arrow_up</i>
-                <span class="header_text">Playback Controls</span>
-            </div>
-            <div class="sidebar_entry_content">
-                <img class="cover_img" src="assets/images/ic_album_white_48px.svg" alt="Cover art">
-                <span class="title">New World</span>
-                <span class="artist_album">Sean McCabe &middot; New World</span>
-                <input type="range" min="1" max="100" value="0" class="scrubbar">
-                <div class="times">
-                    <span>2:35</span>
-                    <span>4:21</san>
-                </div>
-                <div class="controls">
-                    <div class="shuffle"><i class="material-icons">shuffle</i></div>
-                    <div class="previous"><i class="material-icons previous">skip_previous</i></div>
-                    <div class="play_pause"><i class="material-icons play_pause">play_arrow</i></div>
-                    <div class="next"><i class="material-icons next">skip_next</i></div>
-                    <div class="repeat"><i class="material-icons">repeat</i></div>
-                </div>
-            </div>
-        </div>
     </div>
     <div class="content" id="content">
         <div class="authentication">
             It looks like you are not authorized yet.
-            <div id="authorize">
+            <div id="authorize" onclick="u();">
                 <div class="logo_img_holder"><img class="spotify_logo_img" src="assets/images/Spotify_Icon_CMYK_Black.png"></div>
                 <span id="auth_txt">Authorize with Spotify</span>
                 </div>

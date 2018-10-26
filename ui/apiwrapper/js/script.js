@@ -120,45 +120,93 @@ function requestAccesToken(authCode, refresh = false) {
     });
 }
 //All the actions to be executed on window load go here
-window.onload = () => {
+document.addEventListener("dom:loaded", function () {
     document.getElementById("authorize").addEventListener("click", startAuthProcess);
-    setupCustomElements();
-};
+});
+////<reference path="../elements/elements.ts" /> 
 function createSidebarEntry(name) {
     let header = document.createElement("sidebar_element_header");
     let entryName = document.createElement("span");
     entryName.slot = "header_text";
     entryName.innerHTML = name;
     header.appendChild(entryName);
-    header.shadowRoot.childNodes[0].addEventListener("click", (event) => {
-        let target = event.target;
+    /* header.shadowRoot.childNodes[0].addEventListener("click", (event : Event) => {
+        let target : HTMLElement = <HTMLElement> event.target;
         let entry = target.parentElement;
         let childNodes = Array.from(entry.childNodes);
         if (target.getAttribute("open")) {
-            childNodes.forEach((element, index) => {
+            childNodes.forEach((element : HTMLElement, index) => {
                 if (index > 0) {
                     element.style.display = "none";
                 }
             });
             target.style.transform = "rotate(180deg)";
-        }
-        else {
-            childNodes.forEach((element, index) => {
+        } else {
+            childNodes.forEach((element : HTMLElement, index) => {
                 if (index > 0) {
                     element.style.display = "block";
                 }
             });
             target.style.transform = "rotate(0deg)";
         }
-    });
-    let box = document.createElement("div");
-    box.className = "sidebar_entry";
-    box.appendChild(header);
-    return box;
+    }); */
+    let span = document.createElement("span");
+    span.slot = "header_text";
+    span.innerHTML = name;
+    span.className = "header_text";
+    let slots = [span];
+    let element = database.getElement("sidebar-element-header");
+    element.populateSlots(slots);
+    let container = document.createElement("div");
+    container.className = "sidebar_entry";
+    container = element.getElement(container);
+    let contentbox = document.createElement("div");
+    contentbox.className = "sidebar_entry_content";
+    container.appendChild(contentbox);
+    return container;
+}
+function createPlayBackControls(sidebarentry) {
+    let element = database.getElement('playback-controls-basic');
+    let box = sidebarentry.getElementsByClassName('sidebar_entry_content')[0];
+    return element.getElement(box);
 }
 ///<reference path="../../ts/ui_common.ts" /> 
 //import '@typings/spotify-web-playback-sdk';
+class PlaybackController {
+    constructor(sidebarEntry) {
+        this.sidebarentry = sidebarEntry;
+        this.imgholder = this.sidebarentry.getElementsByClassName("cover_img")[0];
+        this.titleholder = this.sidebarentry.getElementsByClassName("title")[0];
+        this.infoholder = this.sidebarentry.getElementsByClassName("artist_album")[0];
+        this.rangebar = this.sidebarentry.getElementsByClassName("scrubbar")[0];
+        let divs = this.sidebarentry.getElementsByTagName("div");
+        let times = divs[0];
+        this.controls = divs[1];
+        this.timecurrent = times.children[0];
+        this.timefull = times.children[1];
+    }
+    setImg(imguri) {
+        this.imgholder.src = imguri;
+    }
+    setTitle(title) {
+        this.titleholder.innerHTML = title;
+        this.currenttrack = title;
+    }
+    setArtistAlbum(artist, album) {
+        let string = artist + " - " + album;
+        this.infoholder.innerHTML = string;
+    }
+    setDuration(time) {
+        this.timefull.innerHTML = time;
+    }
+    setNewParams(params) {
+        this.setImg(params.albumcoveruri);
+        this.setTitle(params.name);
+        this.setArtistAlbum(params.artists[0].name, params.albumname);
+    }
+}
 var player;
+var playbackcontroller;
 function initPlayer() {
     //At this point, auth should be complete and usable
     let script = document.createElement("script");
@@ -172,12 +220,48 @@ function initPlayer() {
         player.on('account_error', ({ message }) => {
             alert("The account used to authorize does not have a valid Spotify Premium subscription!");
         });
+        player.addListener('player_state_changed', state => {
+            let track = state.track_window.current_track;
+            if (track.name != playbackcontroller.currenttrack) {
+                let params = {
+                    "name": track.name,
+                    "albumcoveruri": track.album.images[0].url,
+                    "albumname": track.album.name,
+                    "artists": track.artists
+                };
+                playbackcontroller.setNewParams(params);
+                let trackrequest = new SpotifyApiTrackRequest([track.id]);
+                trackrequest.execute(updatePlayerUI);
+            }
+        });
         player.connect();
         initializePlayerUI(player);
     };
 }
 function initializePlayerUI(player) {
-    //let controller = createSidebarEntry("Playback Controls");
+    let controller = createSidebarEntry("Playback Controls");
+    document.getElementById("sidebar").appendChild(controller);
+    let c = createPlayBackControls(controller);
+    playbackcontroller = new PlaybackController(c);
+}
+function updatePlayerUI(information) {
+    if (information.status == RequestStatus.RESOLVED) {
+        let duration = information.result.duration_ms;
+        let durationins = Math.floor(duration / 1000);
+        let minutes = 0;
+        while (durationins > 59) {
+            durationins -= 60;
+            minutes++;
+        }
+        let string = minutes + ":";
+        if (durationins > 9) {
+            string += durationins;
+        }
+        else {
+            string += "0" + durationins;
+        }
+        playbackcontroller.setDuration(string);
+    }
 }
 //Enum for all the different suburls(scopes) that can be used
 var Scopes;
@@ -342,6 +426,8 @@ class SpotifyApiPutRequest {
             callback(result);
         });
     }
+}
+class SpotifyApiDeleteRequest {
 }
 //SECTION: All the subclasses for individual types of requests
 //SUBSECTION: Subclasses to retrieve data related to albums
@@ -586,7 +672,7 @@ class SpotifyApiRecommendationsRequest extends SpotifyApiGetRequest {
  * Used to check if a user is following one or more artists or other users
  *
  * @class
- * @extends SpotifyApiRequest
+ * @extends SpotifyApiGetRequest
  */
 class SpotifyApiFollowingContainsRequest extends SpotifyApiGetRequest {
     /**
@@ -602,7 +688,7 @@ class SpotifyApiFollowingContainsRequest extends SpotifyApiGetRequest {
  * Used to check if one or more users follow a playlist
  *
  * @class
- * @extends SpotifyApiRequest
+ * @extends SpotifyApiGetRequest
  */
 class SpotifyApiFollowPlaylistCheckRequest extends SpotifyApiGetRequest {
     /**
@@ -617,6 +703,97 @@ class SpotifyApiFollowPlaylistCheckRequest extends SpotifyApiGetRequest {
         this.url = this.baseURL + "users/" + owner_id + "/playlists/" + playlist_id + "/followers/contains?" + joinedids;
     }
 }
+/**
+ * Used to follow one or more artists or users
+ *
+ * @class
+ * @extends SpotifyApiPutRequest
+ */
 class SpotifyApiFollowRequest extends SpotifyApiPutRequest {
 }
-//# sourceMappingURL=script.js.map
+/**
+ * Used to follow a playlist
+ *
+ * @class
+ * @extends SpotifyApiPutRequest
+ */
+class SpotifyApiFollowPlaylistRequest extends SpotifyApiPutRequest {
+}
+/**
+ * Used to unfollow one or more artists or users
+ *
+ * @class
+ * @extends SpotifyApiDeleteRequest
+ */
+class SpotifyApiUnfollowRequest extends SpotifyApiDeleteRequest {
+}
+/**
+ * Used to unfollow a playlist
+ *
+ * @class
+ * @extends SpotifyApiDeleteRequest
+ */
+class SpotifyApiUnfollowPlaylistRequest extends SpotifyApiDeleteRequest {
+}
+//SUBSECTION Subclasses related to retrieving information about spotify tracks
+/**
+* Used to get Audio analysis for a track
+*
+* @class
+* @extends SpotifyApiGetRequest
+*/
+class SpotifyApiAudioAnalysisRequest extends SpotifyApiGetRequest {
+    /**
+    * @constructs SpotifyApiAudioAnalysisRequest
+    * @param track_id Spotify ID of the track
+    */
+    constructor(track_id) {
+        super();
+        this.url = this.baseURL + "audio-analysis/" + track_id;
+    }
+}
+//SUBSECTION Subclasses related to retrieving information about spotify tracks
+/**
+* Used to get Audio features for one or more tracks
+*
+* @class
+* @extends SpotifyApiGetRequest
+*/
+class SpotifyApiAudioFeaturesRequest extends SpotifyApiGetRequest {
+    /**
+     * @constructs SpotifyApiAudioFeaturesRequest
+     * @param track_id Spotify ID(s) of the track
+     */
+    constructor(track_id) {
+        super();
+        if (track_id.length > 1) {
+            let track_ids = track_id.join(",");
+            this.url = this.baseURL + "audio-features/" + track_ids;
+        }
+        else {
+            this.url = this.baseURL + "audio-features/" + track_id[0];
+        }
+    }
+}
+/**
+* Used to get information about one or more tracks
+*
+* @class
+* @extends SpotifyApiGetRequest
+*/
+class SpotifyApiTrackRequest extends SpotifyApiGetRequest {
+    /**
+     * @constructs SpotifyApiTrackRequest
+     * @param track_id Spotify ID(s) of the track
+     */
+    constructor(track_id) {
+        super();
+        if (track_id.length > 1) {
+            let track_ids = track_id.join(",");
+            this.url = this.baseURL + "tracks/" + track_ids;
+        }
+        else {
+            this.url = this.baseURL + "tracks/" + track_id[0];
+        }
+    }
+}

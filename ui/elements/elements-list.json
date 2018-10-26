@@ -1,1 +1,12 @@
-[{ "name": "sidebar-element-header", "uri": "C:\\Users\\koens\\Documents\\jazzytunes\\ui\\elements\\sidebar_element_header.html", "critical": true }]
+[
+    {
+        "name": "sidebar-element-header",
+        "uri": "\\elements\\sidebar_element_header.html",
+        "critical": true
+    },
+    {
+        "name": "playback-controls-basic",
+        "uri": "\\elements\\playback_controls_basic.html",
+        "critical": true
+    }
+]

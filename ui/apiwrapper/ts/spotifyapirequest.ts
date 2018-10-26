@@ -174,6 +174,10 @@ class SpotifyApiPutRequest {
     }
 }
 
+class SpotifyApiDeleteRequest {
+
+}
+
 //SECTION: All the subclasses for individual types of requests
 
 //SUBSECTION: Subclasses to retrieve data related to albums
@@ -451,7 +455,7 @@ class SpotifyApiRecommendationsRequest extends SpotifyApiGetRequest {
  * Used to check if a user is following one or more artists or other users
  * 
  * @class
- * @extends SpotifyApiRequest
+ * @extends SpotifyApiGetRequest
  */
 
 class SpotifyApiFollowingContainsRequest extends SpotifyApiGetRequest {
@@ -469,7 +473,7 @@ class SpotifyApiFollowingContainsRequest extends SpotifyApiGetRequest {
  * Used to check if one or more users follow a playlist
  * 
  * @class
- * @extends SpotifyApiRequest
+ * @extends SpotifyApiGetRequest
  */
 
 class SpotifyApiFollowPlaylistCheckRequest extends SpotifyApiGetRequest {
@@ -486,7 +490,115 @@ class SpotifyApiFollowPlaylistCheckRequest extends SpotifyApiGetRequest {
     }
 }
 
+/**
+ * Used to follow one or more artists or users
+ * 
+ * @class
+ * @extends SpotifyApiPutRequest
+ */
+
 class SpotifyApiFollowRequest extends SpotifyApiPutRequest {
-    constructor(type : )
+    
+}
+
+/**
+ * Used to follow a playlist
+ * 
+ * @class
+ * @extends SpotifyApiPutRequest
+ */
+
+class SpotifyApiFollowPlaylistRequest extends SpotifyApiPutRequest {
+
+}
+
+/**
+ * Used to unfollow one or more artists or users
+ * 
+ * @class
+ * @extends SpotifyApiDeleteRequest
+ */
+
+class SpotifyApiUnfollowRequest extends SpotifyApiDeleteRequest {
+
+}
+
+/**
+ * Used to unfollow a playlist
+ * 
+ * @class
+ * @extends SpotifyApiDeleteRequest
+ */
+
+ class SpotifyApiUnfollowPlaylistRequest extends SpotifyApiDeleteRequest {
+
+ }
+
+ //SUBSECTION Subclasses related to retrieving information about spotify tracks
+
+ /**
+ * Used to get Audio analysis for a track
+ * 
+ * @class
+ * @extends SpotifyApiGetRequest
+ */
+
+ class SpotifyApiAudioAnalysisRequest extends SpotifyApiGetRequest {
+     /**
+     * @constructs SpotifyApiAudioAnalysisRequest
+     * @param track_id Spotify ID of the track
+     */
+     constructor(track_id : string) {
+         super();
+         this.url = this.baseURL + "audio-analysis/" + track_id;
+     }
+ }
+
+//SUBSECTION Subclasses related to retrieving information about spotify tracks
+
+ /**
+ * Used to get Audio features for one or more tracks
+ * 
+ * @class
+ * @extends SpotifyApiGetRequest
+ */
+
+class SpotifyApiAudioFeaturesRequest extends SpotifyApiGetRequest {
+    /**
+     * @constructs SpotifyApiAudioFeaturesRequest
+     * @param track_id Spotify ID(s) of the track
+     */
+    constructor(track_id : Array<string>) {
+        super();
+        if (track_id.length > 1) {
+            let track_ids = track_id.join(",");
+            this.url = this.baseURL + "audio-features/" + track_ids;
+        } else {
+            this.url = this.baseURL + "audio-features/" + track_id[0];
+        }
+    }
+}
+
+ /**
+ * Used to get information about one or more tracks
+ * 
+ * @class
+ * @extends SpotifyApiGetRequest
+ */
+
+class SpotifyApiTrackRequest extends SpotifyApiGetRequest {
+    /**
+     * @constructs SpotifyApiTrackRequest
+     * @param track_id Spotify ID(s) of the track
+     */
+    constructor(track_id : Array<string>) {
+        super();
+        if (track_id.length > 1) {
+            let track_ids = track_id.join(",");
+            this.url = this.baseURL + "tracks/" + track_ids;
+        } else {
+            this.url = this.baseURL + "tracks/" + track_id[0];
+        }
+    }
 }
 
