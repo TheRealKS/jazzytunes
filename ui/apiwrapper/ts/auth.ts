@@ -1,6 +1,8 @@
-const electron = require('electron');
+//import '@types/electron-settings';
+/* const electron = require('electron');
 const remote = electron.remote;
 const BrowserWindow = remote.BrowserWindow;
+const settings  = require('electron-settings'); */
 
 var authWindow, redurl;
 var CLIENT_ID = "40918ae807d24a16a7f8217fa1f445c0";
@@ -28,7 +30,7 @@ class ExpiringCredentials {
         this.refresher = setInterval(fn, timeinms);
     }
 
-    set willRefresh(refresh : boolean) {
+    willRefresh(refresh : boolean) {
         if (refresh !== this.will_refresh) {
             this.will_refresh = refresh;
             if (refresh) {
@@ -60,6 +62,11 @@ class CredentialsProvider {
     }
 }
 
+function checkCredentials() {
+    return false;
+    //return settings.has('access_granted');
+}
+
 function startAuthProcess() {
     //Define the scopes necessary for this project
     var scopes = [
@@ -69,9 +76,20 @@ function startAuthProcess() {
     ];
     var scopesstr = scopes.join(" ");
     scopesstr = encodeURIComponent(scopesstr);
-    redurl ="https://localhost/index.html";
+    var getUrl = window.location;
+    var baseUrl = "https://" + getUrl.host + "/" + getUrl.pathname.split('/')[1];
+    redurl = baseUrl + "redirect_auth.html";
     var url = "https://accounts.spotify.com/authorize?client_id=" + CLIENT_ID + "&response_type=code&scope=" +
         scopesstr + "&redirect_uri=" + encodeURIComponent(redurl);
+
+    window.open(url, "auth");
+
+    window.addEventListener('storage', (e) => {
+        window.focus();
+        console.log(e.storageArea);
+        //Execute checks
+    });
+    /* 
     authWindow = new BrowserWindow({show: false});
 
     authWindow.on('close', () => {
@@ -89,7 +107,7 @@ function startAuthProcess() {
 
     webContents.on('did-get-redirect-request', (event, oldURL, newURL) => {
         handleAuthCodeCallback(newURL);
-    });
+    }); */
 }
 
 function handleAuthCodeCallback(url) {
@@ -133,5 +151,27 @@ function requestAccesToken(authCode : string, refresh : boolean = false) {
         } else {
             credentials.expiringCredentials = cred;
         }
+        init();
+    });
+}
+
+function testCredentials(ret : boolean, retval? : boolean) {
+    //Launch a simple request to test if the credentials are working
+    fetch("https://api.spotify.com/v1/me",
+    {
+        headers: {
+            "Authorization": "Bearer " + credentials.getAccessToken()
+        }
+    })
+    .then(res => {
+        if (res.ok) {
+            //Looks like we are able to use these credentials!
+            return true;
+        } else {
+            return false;
+        }
+    })
+    .then(res => {
+        testCredentials(true, res);
     });
 }

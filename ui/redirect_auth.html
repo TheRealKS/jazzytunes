@@ -1,0 +1,31 @@
+<html>
+
+<head>
+    <script>
+        window.onload = function() {
+            var url = window.location.href;
+            if (url.indexOf("?code=") > -1) {
+                //Code is present
+                document.body.innerHTML = "Redirecting...";
+                var raw_code = raw_code = /code=([^&]*)/.exec(url) || null;
+                var code = (raw_code && raw_code.length > 1) ? raw_code[1] : null;
+                var error = /\?error=(.+)$/.exec(url);
+                alert(code);
+                if (code) {
+                    sessionStorage.setItem('auth_key', code);
+                    window.close();
+                } else if (error) {
+                    document.body.innerHTML = "An error occured: " + error;
+                }
+            } else {
+                document.body.innerHTML = "Access Denied";
+            }
+        };
+    </script>
+</head>
+
+<body>
+
+</body>
+
+</html>

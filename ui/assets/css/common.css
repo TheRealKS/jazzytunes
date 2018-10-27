@@ -15,6 +15,8 @@ body {
     height: 100vh;
     background-color: #2d2824;
     border-right: 2px solid black;
+    user-select: none;
+    cursor: default;
 }
 
 .content {
@@ -146,6 +148,7 @@ body {
     width: 100%;
     height: 0.3em;
     background: #EEEEEE;
+    cursor: pointer;
 }
 
 .scrubbar::-webkit-slider-runnable-track:hover {
@@ -159,6 +162,7 @@ body {
     width: 1.5em;
     background-color: #558B2F;
     margin-top: -0.6em;
+    cursor: pointer;
 }
 
 .scrubbar::-webkit-slider-thumb:hover {

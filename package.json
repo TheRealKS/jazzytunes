@@ -11,6 +11,7 @@
   "author": "TheRealKS",
   "license": "ISC",
   "devDependencies": {
+    "@types/electron-settings": "^3.1.1",
     "electron": "^1.8.4",
     "gulp": "^3.9.1",
     "gulp-typescript": "^4.0.2",
@@ -23,6 +24,7 @@
     "@types/filesystem": "0.0.28",
     "@types/react-dom": "^16.0.5",
     "@types/spotify-web-playback-sdk": "^0.1.2",
+    "electron-settings": "^3.1.4",
     "react": "^16.3.2",
     "react-dom": "^16.3.2"
   }
