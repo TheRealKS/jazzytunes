@@ -172,6 +172,10 @@ function createPlayBackControls(sidebarentry) {
 }
 ///<reference path="../../ts/ui_common.ts" /> 
 //import '@typings/spotify-web-playback-sdk';
+var currentposition;
+var currentduration;
+var onepercent;
+var currenttimer;
 class PlaybackController {
     constructor(sidebarEntry) {
         this.sidebarentry = sidebarEntry;
@@ -184,6 +188,13 @@ class PlaybackController {
         this.controls = divs[1];
         this.timecurrent = times.children[0];
         this.timefull = times.children[1];
+        let children = this.controls.children;
+        this.playbutton = children[2].children[0];
+        this.playbutton.addEventListener('click', setPlaybackState);
+        this.nextbutton = children[3].children[0];
+        this.nextbutton.addEventListener('click', nextTrack);
+        this.previousbutton = children[1].children[0];
+        this.previousbutton.addEventListener('click', previousTrack);
     }
     setImg(imguri) {
         this.imgholder.src = imguri;
@@ -203,6 +214,21 @@ class PlaybackController {
         this.setImg(params.albumcoveruri);
         this.setTitle(params.name);
         this.setArtistAlbum(params.artists[0].name, params.albumname);
+        this.currentseekpercentage = 0;
+    }
+    play() {
+        this.controls.children[2].children[0].innerHTML = "play_arrow";
+        player.togglePlay();
+    }
+    pause() {
+        this.controls.children[2].children[0].innerHTML = "pause";
+        player.pause();
+    }
+    seek(seekpercentage) {
+        this.rangebar.value = seekpercentage.toString();
+    }
+    seekNext() {
+        this.rangebar.value = (++this.currentseekpercentage).toString();
     }
 }
 var player;
@@ -247,6 +273,8 @@ function initializePlayerUI(player) {
 function updatePlayerUI(information) {
     if (information.status == RequestStatus.RESOLVED) {
         let duration = information.result.duration_ms;
+        currentduration = duration;
+        onepercent = Math.floor(duration / 100);
         let durationins = Math.floor(duration / 1000);
         let minutes = 0;
         while (durationins > 59) {
@@ -261,6 +289,36 @@ function updatePlayerUI(information) {
             string += "0" + durationins;
         }
         playbackcontroller.setDuration(string);
+        settimeincrementer();
+    }
+}
+function setPlaybackState(ev, playing) {
+    player.getCurrentState().then(res => {
+        if (res.paused) {
+            playbackcontroller.play();
+        }
+        else {
+            playbackcontroller.pause();
+        }
+    });
+}
+function nextTrack(ev) {
+    player.nextTrack();
+}
+function previousTrack(ev) {
+    player.previousTrack();
+}
+function setPosition(position) {
+    player.seek(position);
+    currentposition = position;
+    playbackcontroller.seek(Math.floor((currentduration / 100) * position));
+}
+function settimeincrementer() {
+    if (!currenttimer) {
+        currenttimer = setInterval(() => {
+            currentposition += onepercent;
+            playbackcontroller.seekNext();
+        }, onepercent);
     }
 }
 //Enum for all the different suburls(scopes) that can be used
@@ -353,6 +411,8 @@ class SpotifyApiGetRequest {
         });
     }
 }
+class SpotifyApiPostRequest {
+}
 class SpotifyApiPutRequest {
     constructor(bodyJson) {
         this.baseURL = "https://api.spotify.com/v1/"; //Base URL all requests use
@@ -429,7 +489,7 @@ class SpotifyApiPutRequest {
 }
 class SpotifyApiDeleteRequest {
 }
-//SECTION: All the subclasses for individual types of requests
+//#region All the subclasses for individual types of requests
 //SUBSECTION: Subclasses to retrieve data related to albums
 /**
  * Used to retrieve an overview of the album
@@ -735,6 +795,165 @@ class SpotifyApiUnfollowRequest extends SpotifyApiDeleteRequest {
  */
 class SpotifyApiUnfollowPlaylistRequest extends SpotifyApiDeleteRequest {
 }
+//SUBSECTION Subclasses related to retrieving information about the users library
+/**
+* Used to check if a user has already saved one or more albums
+*
+* @class
+* @extends SpotifyApiGetRequest
+*/
+class SpotifyApiSavedAlbumsContainsRequest extends SpotifyApiGetRequest {
+    /**
+     * @constructs SpotifyApiSavedAlbumsContainsRequest
+     * @param track_id Spotify IDs of the albums
+     */
+    constructor(album_ids) {
+        super();
+        if (album_ids.length > 1) {
+            this.url = this.baseURL + "me/albums/contains/" + album_ids.join(",");
+        }
+        else {
+            this.url = this.baseURL + "me/albums/contains/" + album_ids[0];
+        }
+    }
+}
+/**
+* Used to check if a user has already saved one or more tracks
+*
+* @class
+* @extends SpotifyApiGetRequest
+*/
+class SpotifyApiSavedTracksContainsRequest extends SpotifyApiGetRequest {
+    /**
+    * @constructs SpotifyApiSavedTracksContainsRequest
+    * @param track_id Spotify IDs of the tracks
+    */
+    constructor(track_ids) {
+        super();
+        if (track_ids.length > 1) {
+            this.url = this.baseURL + "me/tracks/contains/" + track_ids.join(",");
+        }
+        else {
+            this.url = this.baseURL + "me/tracks/contains/" + track_ids[0];
+        }
+    }
+}
+/**
+* Used to retrieve the users saved albums
+*
+* @class
+* @extends SpotifyApiGetRequest
+*/
+class SpotifyApiSavedAlbumsRequest extends SpotifyApiGetRequest {
+    /**
+    * @constructs SpotifyApiSavedAlbumsRequest
+    * @param options Options as a key/value array
+    */
+    constructor(options) {
+        super();
+        this.url = this.baseURL + this.parseOptions(options);
+    }
+}
+/**
+* Used to retrieve the users saved tracks
+*
+* @class
+* @extends SpotifyApiGetRequest
+*/
+class SpotifyApiSavedTracksRequest extends SpotifyApiGetRequest {
+    /**
+    * @constructs SpotifyApiSavedTracksRequest
+    * @param options Options as a key/value array
+    */
+    constructor(options) {
+        super();
+        this.url = this.baseURL + this.parseOptions(options);
+    }
+}
+/**
+* Used to remove one or more albums from the users saved tracks
+*
+* @class
+* @extends SpotifyApiDeleteRequest
+*/
+class SpotifyApiUnsaveAlbumsRequest extends SpotifyApiDeleteRequest {
+    /**
+    * @constructs SpotifyApiUnsaveAlbumsRequest
+    * @param album_ids Spotify IDs of the albums
+    */
+    constructor(album_ids) {
+        super();
+        if (album_ids.length > 1) {
+            this.url = this.baseURL + "me/albums?ids=" + album_ids.join(",");
+        }
+        else {
+            this.url = this.baseURL + "me/abumns?ids=" + album_ids[0];
+        }
+    }
+}
+/**
+* Used to remove one or more tracks from the users saved tracks
+*
+* @class
+* @extends SpotifyApiDeleteRequest
+*/
+class SpotifyApiUnsaveTracksRequest extends SpotifyApiDeleteRequest {
+    /**
+    * @constructs SpotifyApiUnsaveTracksRequest
+    * @param track_ids Spotify IDs of the tracks
+    */
+    constructor(track_ids) {
+        super();
+        if (track_ids.length > 1) {
+            this.url = this.baseURL + "me/tracks?ids=" + track_ids.join(",");
+        }
+        else {
+            this.url = this.baseURL + "me/abumns?ids=" + track_ids[0];
+        }
+    }
+}
+/**
+* Used to save one or more albums to the users library
+*
+* @class
+* @extends SpotifyApiPutRequest
+*/
+class SpotifyApiSaveAlbumsRequest extends SpotifyApiPutRequest {
+    /**
+     * @constructs SpotifyApiSaveAlbumsRequest
+     * @param album_ids Spotify IDs of the albums
+     */
+    constructor(album_ids) {
+        super();
+        if (album_ids.length > 1) {
+            this.url = this.baseURL + "me/albums?ids=" + album_ids.join(",");
+        }
+        else {
+            this.url = this.baseURL + "me/abumns?ids=" + album_ids[0];
+        }
+    }
+}
+/**
+* Used to save one or more tracks to users library
+*
+* @class
+* @extends SpotifyApiPutRequest
+*/
+class SpotifyApiSaveTracksRequest extends SpotifyApiPutRequest {
+    /**
+    * @constructs SpotifyApiSaveTracksRequest
+    * @param track_ids Spotify IDs of the tracks
+    */
+    constructor(track_ids) {
+        super();
+        if (track_ids.length > 1) {
+            this.url = this.baseURL + "me/tracks?ids=" + track_ids.join(",");
+        }
+        else {
+            this.url = this.baseURL + "me/abumns?ids=" + track_ids[0];
+        }
+    }
+}
 //SUBSECTION Subclasses related to retrieving information about spotify tracks
 /**
 * Used to get Audio analysis for a track
@@ -752,7 +971,80 @@ class SpotifyApiAudioAnalysisRequest extends SpotifyApiGetRequest {
         this.url = this.baseURL + "audio-analysis/" + track_id;
     }
 }
-//SUBSECTION Subclasses related to retrieving information about spotify tracks
+//SUBSECTION Subclasses related to retrieving information about the users listening habits
+/**
+ * Used to get the users top artists or tracks
+ *
+ * @class
+ * @extends SpotifyApiGetRequest
+ */
+class SpotifyApiTopRequest extends SpotifyApiGetRequest {
+    /**
+    * @constructs SpotifyApiTopRequest
+    * @param type Type of entity. Valid values are 'artists' or 'tracks'
+    */
+    constructor(type) {
+        super();
+        this.url = this.baseURL + "me/top/" + type;
+    }
+}
+//SUBSECTION Subclasses related to manipulation and retrieving information about a user's playlists
+/**
+ * Used to save one or more tracks to a playlist
+ *
+ * @class
+ * @extends SpotifyApiGetRequest
+ */
+class SpotifyApiPlaylistAddRequest extends SpotifyApiGetRequest {
+    /**
+     * @constructs SpotifyApiPlaylistAddRequest
+     * @param playlist_id The Spotify ID of the playlist to add the tracks to
+     * @param track_uris The Spotify URI's (spotify:track:xxx) of the tracks to add to the playlist
+     * @param positon (Optional) The position at which to insert the tracks. If omitted, the tracks are appended
+     */
+    constructor(playlist_id, track_uris, position) {
+        super();
+        this.url = this.baseURL + "playlists/" + playlist_id + "?ids=" + track_uris.join(",");
+        if (position) {
+            this.url += "&position" + position;
+        }
+    }
+}
+/**
+ * Used to change the details of a playlist
+ *
+ * @class
+ * @extends SpotifyApiPostRequest
+ */
+class SpotifyApiPlaylistChangeRequest extends SpotifyApiPostRequest {
+    /**
+     * @constructs SpotifyApiPlaylistChangeRequest
+     * @param playlist_id The Spotify ID of the playlist to change
+     * @param details Object containing the fields name, public, collaborative and description
+     */
+    constructor(playlist_id, details) {
+        super();
+        this.bodyparams = JSON.stringify(details);
+        this.url = this.baseURL + "playlists/" + playlist_id;
+    }
+}
+/**
+ * Used to create a new playlist
+ *
+ * @class
+ * @extends SpotifyApiPostRequest
+ */
+class SpotifyApiCreatePlaylistRequest extends SpotifyApiPostRequest {
+    /**
+     * @constructs SpotifyApiPlaylistChangeRequest
+     * @param playlist_id The Spotify ID of the playlist to change
+     * @param details Object containing the fields name, public, collaborative and description
+     */
+    constructor() {
+        super();
+    }
+}
+//SUBSECTION Subclasses related to retrieving information about Spotify tracks
 /**
 * Used to get Audio features for one or more tracks
 *
@@ -797,3 +1089,4 @@ class SpotifyApiTrackRequest extends SpotifyApiGetRequest {
         }
     }
 }
+//#endregion
