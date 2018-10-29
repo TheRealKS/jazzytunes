@@ -26,6 +26,13 @@ interface PlaylistDetails {
     description : string
 }
 
+function test(id, tracks) {
+    let r = new SpotifyApiPlaylistAddRequest(id, tracks);
+    r.execute((result : any) => {
+        console.log(result);
+    });
+}
+
 class SpotifyApiRequestResult {
     status : RequestStatus = RequestStatus.UNRESOLVED;
     result : Object = null;
@@ -100,7 +107,58 @@ class SpotifyApiGetRequest {
 }
 
 class SpotifyApiPostRequest {
+    baseURL = "https://api.spotify.com/v1/"; //Base URL all requests use
+    url : string;
+    result : SpotifyApiRequestResult;
+    body : string;
+    constructor() {
 
+    }
+
+    setBodyParams(jsonstring : string) {
+        this.body = jsonstring;
+    }
+
+    /**
+     * Executes the request
+     * 
+     * @param callback The function this function was orignally called from.
+     * @returns The result of the request as a parameter to the callback parameter.
+     */
+
+    execute(callback : Function) {
+        if (!this.body) {
+            this.result = new SpotifyApiRequestResult(RequestStatus.UNRESOLVED, "Error INTERNAL", "No body paramters have been set");
+            //callback(this.result);
+            //return;
+        }
+        fetch(this.url, {
+            method: "POST",
+            headers : {
+                Authorization: "Bearer " + credentials.getAccessToken(),
+                "Content-Type": "application/json"
+            },
+            body: this.body
+        })
+        .then(function(res) {
+            if (res.ok) {
+                //TODO: Further error handling
+                return res.json();
+            } else {
+                alert("Error!");
+            }
+        })
+        .then(function(json) {
+            let result : SpotifyApiRequestResult;
+            if (json.error) {
+                //OOPS
+                result = new SpotifyApiRequestResult(RequestStatus.ERROR, json.error, json.error_description);
+            } else {
+                result = new SpotifyApiRequestResult(RequestStatus.RESOLVED, json);
+            }
+            callback(result);
+        });
+    }
 }
 
 class SpotifyApiPutRequest {
@@ -764,7 +822,7 @@ class SpotifyApiTopRequest extends SpotifyApiGetRequest {
  * @extends SpotifyApiGetRequest
  */
 
-class SpotifyApiPlaylistAddRequest extends SpotifyApiGetRequest {
+class SpotifyApiPlaylistAddRequest extends SpotifyApiPostRequest {
     /**
      * @constructs SpotifyApiPlaylistAddRequest
      * @param playlist_id The Spotify ID of the playlist to add the tracks to
@@ -773,7 +831,7 @@ class SpotifyApiPlaylistAddRequest extends SpotifyApiGetRequest {
      */
     constructor(playlist_id : string, track_uris : Array<string>, position? : number) {
         super();
-        this.url = this.baseURL + "playlists/" + playlist_id + "?ids="+ track_uris.join(",");
+        this.url = this.baseURL + "playlists/" + playlist_id + "?uris="+ track_uris.join(",");
         if (position) {
             this.url += "&position" + position;
         }
@@ -795,7 +853,7 @@ class SpotifyApiPlaylistChangeRequest extends SpotifyApiPostRequest {
      */
     constructor(playlist_id : string, details : PlaylistDetails) {
         super();
-        this.bodyparams = JSON.stringify(details);
+        this.setBodyParams(JSON.stringify(details));
         this.url = this.baseURL + "playlists/" + playlist_id;
     }
 }
