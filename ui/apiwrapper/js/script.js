@@ -172,6 +172,10 @@ function createPlayBackControls(sidebarentry) {
 }
 ///<reference path="../../ts/ui_common.ts" /> 
 //import '@typings/spotify-web-playback-sdk';
+var currentposition;
+var currentduration;
+var onepercent;
+var currenttimer;
 class PlaybackController {
     constructor(sidebarEntry) {
         this.sidebarentry = sidebarEntry;
@@ -184,6 +188,13 @@ class PlaybackController {
         this.controls = divs[1];
         this.timecurrent = times.children[0];
         this.timefull = times.children[1];
+        let children = this.controls.children;
+        this.playbutton = children[2].children[0];
+        this.playbutton.addEventListener('click', setPlaybackState);
+        this.nextbutton = children[3].children[0];
+        this.nextbutton.addEventListener('click', nextTrack);
+        this.previousbutton = children[1].children[0];
+        this.previousbutton.addEventListener('click', previousTrack);
     }
     setImg(imguri) {
         this.imgholder.src = imguri;
@@ -203,6 +214,21 @@ class PlaybackController {
         this.setImg(params.albumcoveruri);
         this.setTitle(params.name);
         this.setArtistAlbum(params.artists[0].name, params.albumname);
+        this.currentseekpercentage = 0;
+    }
+    play() {
+        this.controls.children[2].children[0].innerHTML = "play_arrow";
+        player.togglePlay();
+    }
+    pause() {
+        this.controls.children[2].children[0].innerHTML = "pause";
+        player.pause();
+    }
+    seek(seekpercentage) {
+        this.rangebar.value = seekpercentage.toString();
+    }
+    seekNext() {
+        this.rangebar.value = (++this.currentseekpercentage).toString();
     }
 }
 var player;
@@ -247,6 +273,8 @@ function initializePlayerUI(player) {
 function updatePlayerUI(information) {
     if (information.status == RequestStatus.RESOLVED) {
         let duration = information.result.duration_ms;
+        currentduration = duration;
+        onepercent = Math.floor(duration / 100);
         let durationins = Math.floor(duration / 1000);
         let minutes = 0;
         while (durationins > 59) {
@@ -261,6 +289,36 @@ function updatePlayerUI(information) {
             string += "0" + durationins;
         }
         playbackcontroller.setDuration(string);
+        settimeincrementer();
+    }
+}
+function setPlaybackState(ev, playing) {
+    player.getCurrentState().then(res => {
+        if (res.paused) {
+            playbackcontroller.play();
+        }
+        else {
+            playbackcontroller.pause();
+        }
+    });
+}
+function nextTrack(ev) {
+    player.nextTrack();
+}
+function previousTrack(ev) {
+    player.previousTrack();
+}
+function setPosition(position) {
+    player.seek(position);
+    currentposition = position;
+    playbackcontroller.seek(Math.floor((currentduration / 100) * position));
+}
+function settimeincrementer() {
+    if (!currenttimer) {
+        currenttimer = setInterval(() => {
+            currentposition += onepercent;
+            playbackcontroller.seekNext();
+        }, onepercent);
     }
 }
 //Enum for all the different suburls(scopes) that can be used
