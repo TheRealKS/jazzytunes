@@ -19,6 +19,8 @@ enum RequestStatus {
     "ERROR" = 3
 };
 
+type RequestCallbackFunction = (result : SpotifyApiRequestResult) => void;
+
 interface PlaylistDetails {
     name : string,
     public : boolean,
@@ -75,11 +77,11 @@ class SpotifyApiGetRequest {
     /**
      * Executes the request
      * 
-     * @param callback The function this function was orignally called from.
+     * @param callback The callback function to be called when the request has been executed. Needs to have a variable of the type SpotifyApiRequestResult as a parameter
      * @returns The result of the request as a parameter to the callback parameter.
      */
 
-    execute(callback : Function) {
+    execute(callback : RequestCallbackFunction) {
         fetch(this.url, {
             headers : {
                 Authorization: "Bearer " + credentials.getAccessToken()
@@ -746,7 +748,7 @@ class SpotifyApiSaveAlbumsRequest extends SpotifyApiPutRequest {
         if (album_ids.length > 1) {
             this.url = this.baseURL + "me/albums?ids=" + album_ids.join(",");
         } else {
-            this.url = this.baseURL + "me/abumns?ids=" + album_ids[0];
+            this.url = this.baseURL + "me/albums?ids=" + album_ids[0];
         }
      }
 }
@@ -920,6 +922,19 @@ class SpotifyApiTrackRequest extends SpotifyApiGetRequest {
             this.url = this.baseURL + "tracks/" + track_ids;
         } else {
             this.url = this.baseURL + "tracks/" + track_id[0];
+        }
+    }
+}
+
+//SUBSECTION Subclasses related to retrieving information about users(s)
+
+class SpotifyApiUserRequest extends SpotifyApiGetRequest {
+    constructor(currentuser : boolean, user_id? : string) {
+        super();
+        if (currentuser) {
+            this.url = this.baseURL + "me";
+        } else {
+            this.url = this.baseURL + "users/" + user_id;
         }
     }
 }

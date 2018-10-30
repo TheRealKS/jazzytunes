@@ -3,7 +3,7 @@ const path = require('path');
 const url = require('url');
 
 function createWindow() {
-    win = new BrowserWindow({show: false, webPreferences: {plugins: true}});
+    win = new BrowserWindow({show: false, webPreferences: {plugins: true}, title: "JazzyTunes"});
 
     win.loadURL(url.format({
         pathname: path.join(__dirname, 'ui/index.html'),

@@ -1,9 +1,6 @@
 <html>
 
 <head>
-    <title>
-        LOL
-    </title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/common.css">
     <script src="elements/elements.js"></script>
@@ -12,8 +9,23 @@
 
 <body>
     <div class="sidebar" id="sidebar">
+        <div class="credentials">
+            <div id="user_info" class="user_info">
+                <img id="user_picture" class="user_picture" src="assets/images/baseline-account_circle-24px.svg" alt="assets/images/baseline-account_circle-24px.svg">
+                <span id="user_name"></span>
+            </div>
+            <div class="volume_button">
+                <i class="material-icons settings_button_icon">volume_up</i>
+            </div>
+        </div>
     </div>
     <div class="content" id="content">
+        <div class="homepage">
+            <span class="header_text">
+                Good evening! What would you like to play today?
+            </span>
+        </div>
+        <!--
         <div class="authentication">
             It looks like you are not authorized yet.
             <div id="authorize" onclick="startAuthProcess();">
@@ -21,6 +33,7 @@
                 <span id="auth_txt">Authorize with Spotify</span>
             </div>
         </div>
+    -->
     </div>
 </body>
 

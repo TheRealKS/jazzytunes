@@ -8,6 +8,26 @@ var CLIENT_SECRET = "b1506d8d8edf447a816d773def58a1c3";
 
 var credentials : CredentialsProvider;
 
+var currentuser : CurrentUserInformation;
+
+interface SpotifyUserImage {
+    height : any;
+    width: any;
+    url : string;
+}
+
+class CurrentUserInformation {
+    username : string;
+    id : string;
+    images : Array<SpotifyUserImage>;
+    
+    constructor(username : string, id : string, images : Array<SpotifyUserImage>) {
+        this.username = username;
+        this.id = id;
+        this.images = images;
+    }
+}
+
 class ExpiringCredentials {
     access_token : string
     refresh_token : string
@@ -126,16 +146,30 @@ function requestAccesToken(authCode : string, refresh : boolean = false) {
             return response.json();
         }
     }).then(res => {
-        //Process data
-        let content = document.getElementById("content");
-        content.innerHTML = "Authorized! Code = " + res.access_token;
+        //Process data;
+        console.log("Authorized! Code = " + res.access_token);
         let cred = new ExpiringCredentials(res.access_token, res.refresh_token, res.expires_in, true);
         if (refresh) {
             credentials.expiringCredentials.revoke();
             credentials.expiringCredentials = cred;
         } else {
             credentials.expiringCredentials = cred;
+            getUserDetails();
         }
         initPlayer();
     });
+}
+
+function getUserDetails() {
+    let userdetailsrequest = new SpotifyApiUserRequest(true);
+    userdetailsrequest.execute(createProfile);
+}
+
+function createProfile(result : SpotifyApiRequestResult) {
+    if (result.status == RequestStatus.RESOLVED) {
+        let profile = new CurrentUserInformation(result.result.display_name, result.result.id, result.result.images);
+        currentuser = profile;
+        document.getElementById("user_name").innerText = profile.username;
+        document.getElementById("user_picture").src = profile.images[0].url;
+    }
 }

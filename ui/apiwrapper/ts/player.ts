@@ -8,10 +8,79 @@ interface PlaybackParams {
     artists : Array<Spotify.Artist>;
 }
 
-var currentposition : number;
-var currentduration : number;
-var onepercent : number;
-var currenttimer : number;
+class SeekBar {
+    seekbar : HTMLInputElement;
+    currentposition : number;
+    currentpercentage : number; //1-100
+    currentduration : number;
+    onepercent : number;
+    currenttimer : NodeJS.Timer;
+    timeractivated : boolean;
+
+    constructor(bar : HTMLInputElement) {
+        this.seekbar = bar;
+        this.seekbar.addEventListener("mouseup", (e) => {
+            let value = e.target.value;
+            let ms = value * this.onepercent;
+            this.seekToValue(ms, value);
+            player.seek(ms);
+        });
+    }
+
+    /**
+     * Sets (resets) the current song parameter
+     * @param newsongduration The duration of the next track in milliseconds
+     */
+    setParams(newsongduration : number) {
+        this.currentduration = newsongduration;
+        this.onepercent = Math.round(newsongduration / 100);
+        this.currentposition = 0;
+        this.deleteTimer();
+        this.createTimer();
+    }
+
+    /**
+     * Seeks the seekbar to a value. Does not change the playing position of the player.
+     * @param positionInMS The position to seek to in milliseconds
+     */
+    seekToValue(positionInMS : number, percentage? : number) {
+        if (positionInMS <= this.currentduration) {
+            this.currentposition = positionInMS;
+            if (percentage) {
+                this.currentpercentage = percentage;
+            } else {
+                this.currentpercentage = Math.ceil(positionInMS / this.onepercent);
+            }
+            playbackcontroller.setCurrentTime(secondsToTimeString(Math.round((this.currentposition / 1000))));
+            this.seekbar.value = this.currentpercentage.toString();
+        } else {
+            this.currentpercentage = 100;
+            this.seekbar.value = '100';
+            playbackcontroller.setCurrentTime(playbackcontroller.timefull.innerHTML);
+            this.deleteTimer();
+        }
+    }
+
+    toggleTimer(state : boolean) {
+        this.timeractivated = state;
+    }
+
+    protected createTimer() {
+        this.currenttimer = setInterval(() => {
+            if (this.timeractivated) {
+                this.seekToValue(this.currentposition + this.onepercent);
+            }
+        }, this.onepercent)
+    }
+
+    protected deleteTimer() {
+        if (this.currenttimer) {
+            clearInterval(this.currenttimer);
+            this.currenttimer = undefined;
+        }
+    }
+
+}
 
 class PlaybackController {
     sidebarentry : Element;
@@ -21,7 +90,7 @@ class PlaybackController {
     imgholder : HTMLImageElement;
     titleholder : HTMLSpanElement;
     infoholder : HTMLSpanElement;
-    rangebar : HTMLInputElement;
+    seekbar : SeekBar;
     timecurrent : HTMLSpanElement;
     timefull : HTMLSpanElement;
     controls : HTMLDivElement;
@@ -36,7 +105,7 @@ class PlaybackController {
         this.imgholder = <HTMLImageElement>this.sidebarentry.getElementsByClassName("cover_img")[0];
         this.titleholder = <HTMLSpanElement>this.sidebarentry.getElementsByClassName("title")[0];
         this.infoholder = <HTMLSpanElement>this.sidebarentry.getElementsByClassName("artist_album")[0];
-        this.rangebar = <HTMLInputElement>this.sidebarentry.getElementsByClassName("scrubbar")[0];
+        this.seekbar = new SeekBar(<HTMLInputElement>this.sidebarentry.getElementsByClassName("scrubbar")[0]);
         let divs = this.sidebarentry.getElementsByTagName("div");
         let times = divs[0];
         this.controls = divs[1];
@@ -74,25 +143,24 @@ class PlaybackController {
         this.setImg(params.albumcoveruri);
         this.setTitle(params.name);
         this.setArtistAlbum(params.artists[0].name, params.albumname);
-        this.currentseekpercentage = 0;
+        this.timecurrent.innerText = "0:00";
+        this.seekbar.seekToValue(0, 0);
     }
 
     play() {
         this.controls.children[2].children[0].innerHTML = "play_arrow";
+        this.seekbar.toggleTimer(true);
         player.togglePlay();
     }
 
     pause() {
         this.controls.children[2].children[0].innerHTML = "pause";
+        this.seekbar.toggleTimer(false);
         player.pause();
     }
 
-    seek(seekpercentage : number) {
-        this.rangebar.value = seekpercentage.toString();
-    }
-
-    seekNext() {
-        this.rangebar.value = (++this.currentseekpercentage).toString();
+    setCurrentTime(timestring : string) {
+        this.timecurrent.innerHTML = timestring;
     }
 }
 
@@ -145,23 +213,26 @@ function initializePlayerUI(player : Spotify.SpotifyPlayer) {
 function updatePlayerUI(information : SpotifyApiRequestResult) {
     if (information.status == RequestStatus.RESOLVED) {
         let duration = information.result.duration_ms;
-        currentduration = duration;
-        onepercent = Math.floor(duration / 100);
-        let durationins = Math.floor(duration / 1000);
-        let minutes = 0;
-        while (durationins > 59) {
-            durationins -= 60;
-            minutes++;
-        }
-        let string = minutes + ":";
-        if (durationins > 9) {
-            string += durationins;
-        } else {
-            string += "0" + durationins;
-        }
-        playbackcontroller.setDuration(string);
-        settimeincrementer();
+        playbackcontroller.seekbar.setParams(duration);
+        playbackcontroller.seekbar.toggleTimer(true);
+        let seconds = Math.round(duration / 1000);
+        playbackcontroller.setDuration(secondsToTimeString(seconds));
     }
+}
+
+function secondsToTimeString(seconds : number) : string {
+    let minutes = 0;
+    while (seconds > 59) {
+        seconds -= 60;
+        minutes++;
+    }
+    let string = minutes + ":";
+    if (seconds > 9) {
+        string += seconds;
+    } else {
+        string += "0" + seconds;
+    }
+    return string;
 }
 
 function setPlaybackState(ev : Event, playing? : boolean) {
@@ -184,15 +255,5 @@ function previousTrack(ev : Event) {
 
 function setPosition(position : number) {
     player.seek(position);
-    currentposition = position;
-    playbackcontroller.seek(Math.floor((currentduration / 100) * position));
-}
-
-function settimeincrementer() {
-    if (!currenttimer) {
-        currenttimer = <number><unknown>setInterval(() => {
-            currentposition += onepercent;
-            playbackcontroller.seekNext();
-        }, onepercent);
-    }
+    playbackcontroller.seekbar.seekToValue(position);
 }

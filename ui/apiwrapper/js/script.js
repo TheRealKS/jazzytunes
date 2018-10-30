@@ -5,6 +5,14 @@ var authWindow, redurl;
 var CLIENT_ID = "40918ae807d24a16a7f8217fa1f445c0";
 var CLIENT_SECRET = "b1506d8d8edf447a816d773def58a1c3";
 var credentials;
+var currentuser;
+class CurrentUserInformation {
+    constructor(username, id, images) {
+        this.username = username;
+        this.id = id;
+        this.images = images;
+    }
+}
 class ExpiringCredentials {
     constructor(a_t, r_t, e_i, w_r) {
         this.will_refresh = true;
@@ -105,9 +113,8 @@ function requestAccesToken(authCode, refresh = false) {
             return response.json();
         }
     }).then(res => {
-        //Process data
-        let content = document.getElementById("content");
-        content.innerHTML = "Authorized! Code = " + res.access_token;
+        //Process data;
+        console.log("Authorized! Code = " + res.access_token);
         let cred = new ExpiringCredentials(res.access_token, res.refresh_token, res.expires_in, true);
         if (refresh) {
             credentials.expiringCredentials.revoke();
@@ -115,9 +122,22 @@ function requestAccesToken(authCode, refresh = false) {
         }
         else {
             credentials.expiringCredentials = cred;
+            getUserDetails();
         }
         initPlayer();
     });
+}
+function getUserDetails() {
+    let userdetailsrequest = new SpotifyApiUserRequest(true);
+    userdetailsrequest.execute(createProfile);
+}
+function createProfile(result) {
+    if (result.status == RequestStatus.RESOLVED) {
+        let profile = new CurrentUserInformation(result.result.display_name, result.result.id, result.result.images);
+        currentuser = profile;
+        document.getElementById("user_name").innerText = profile.username;
+        document.getElementById("user_picture").src = profile.images[0].url;
+    }
 }
 //All the actions to be executed on window load go here
 document.addEventListener("dom:loaded", function () {
@@ -172,17 +192,74 @@ function createPlayBackControls(sidebarentry) {
 }
 ///<reference path="../../ts/ui_common.ts" /> 
 //import '@typings/spotify-web-playback-sdk';
-var currentposition;
-var currentduration;
-var onepercent;
-var currenttimer;
+class SeekBar {
+    constructor(bar) {
+        this.seekbar = bar;
+        this.seekbar.addEventListener("mouseup", (e) => {
+            let value = e.target.value;
+            let ms = value * this.onepercent;
+            this.seekToValue(ms, value);
+            player.seek(ms);
+        });
+    }
+    /**
+     * Sets (resets) the current song parameter
+     * @param newsongduration The duration of the next track in milliseconds
+     */
+    setParams(newsongduration) {
+        this.currentduration = newsongduration;
+        this.onepercent = Math.round(newsongduration / 100);
+        this.currentposition = 0;
+        this.deleteTimer();
+        this.createTimer();
+    }
+    /**
+     * Seeks the seekbar to a value. Does not change the playing position of the player.
+     * @param positionInMS The position to seek to in milliseconds
+     */
+    seekToValue(positionInMS, percentage) {
+        if (positionInMS <= this.currentduration) {
+            this.currentposition = positionInMS;
+            if (percentage) {
+                this.currentpercentage = percentage;
+            }
+            else {
+                this.currentpercentage = Math.ceil(positionInMS / this.onepercent);
+            }
+            playbackcontroller.setCurrentTime(secondsToTimeString(Math.round((this.currentposition / 1000))));
+            this.seekbar.value = this.currentpercentage.toString();
+        }
+        else {
+            this.currentpercentage = 100;
+            this.seekbar.value = '100';
+            playbackcontroller.setCurrentTime(playbackcontroller.timefull.innerHTML);
+            this.deleteTimer();
+        }
+    }
+    toggleTimer(state) {
+        this.timeractivated = state;
+    }
+    createTimer() {
+        this.currenttimer = setInterval(() => {
+            if (this.timeractivated) {
+                this.seekToValue(this.currentposition + this.onepercent);
+            }
+        }, this.onepercent);
+    }
+    deleteTimer() {
+        if (this.currenttimer) {
+            clearInterval(this.currenttimer);
+            this.currenttimer = undefined;
+        }
+    }
+}
 class PlaybackController {
     constructor(sidebarEntry) {
         this.sidebarentry = sidebarEntry;
         this.imgholder = this.sidebarentry.getElementsByClassName("cover_img")[0];
         this.titleholder = this.sidebarentry.getElementsByClassName("title")[0];
         this.infoholder = this.sidebarentry.getElementsByClassName("artist_album")[0];
-        this.rangebar = this.sidebarentry.getElementsByClassName("scrubbar")[0];
+        this.seekbar = new SeekBar(this.sidebarentry.getElementsByClassName("scrubbar")[0]);
         let divs = this.sidebarentry.getElementsByTagName("div");
         let times = divs[0];
         this.controls = divs[1];
@@ -214,21 +291,21 @@ class PlaybackController {
         this.setImg(params.albumcoveruri);
         this.setTitle(params.name);
         this.setArtistAlbum(params.artists[0].name, params.albumname);
-        this.currentseekpercentage = 0;
+        this.timecurrent.innerText = "0:00";
+        this.seekbar.seekToValue(0, 0);
     }
     play() {
         this.controls.children[2].children[0].innerHTML = "play_arrow";
+        this.seekbar.toggleTimer(true);
         player.togglePlay();
     }
     pause() {
         this.controls.children[2].children[0].innerHTML = "pause";
+        this.seekbar.toggleTimer(false);
         player.pause();
     }
-    seek(seekpercentage) {
-        this.rangebar.value = seekpercentage.toString();
-    }
-    seekNext() {
-        this.rangebar.value = (++this.currentseekpercentage).toString();
+    setCurrentTime(timestring) {
+        this.timecurrent.innerHTML = timestring;
     }
 }
 var player;
@@ -273,24 +350,26 @@ function initializePlayerUI(player) {
 function updatePlayerUI(information) {
     if (information.status == RequestStatus.RESOLVED) {
         let duration = information.result.duration_ms;
-        currentduration = duration;
-        onepercent = Math.floor(duration / 100);
-        let durationins = Math.floor(duration / 1000);
-        let minutes = 0;
-        while (durationins > 59) {
-            durationins -= 60;
-            minutes++;
-        }
-        let string = minutes + ":";
-        if (durationins > 9) {
-            string += durationins;
-        }
-        else {
-            string += "0" + durationins;
-        }
-        playbackcontroller.setDuration(string);
-        settimeincrementer();
+        playbackcontroller.seekbar.setParams(duration);
+        playbackcontroller.seekbar.toggleTimer(true);
+        let seconds = Math.round(duration / 1000);
+        playbackcontroller.setDuration(secondsToTimeString(seconds));
     }
+}
+function secondsToTimeString(seconds) {
+    let minutes = 0;
+    while (seconds > 59) {
+        seconds -= 60;
+        minutes++;
+    }
+    let string = minutes + ":";
+    if (seconds > 9) {
+        string += seconds;
+    }
+    else {
+        string += "0" + seconds;
+    }
+    return string;
 }
 function setPlaybackState(ev, playing) {
     player.getCurrentState().then(res => {
@@ -310,16 +389,7 @@ function previousTrack(ev) {
 }
 function setPosition(position) {
     player.seek(position);
-    currentposition = position;
-    playbackcontroller.seek(Math.floor((currentduration / 100) * position));
-}
-function settimeincrementer() {
-    if (!currenttimer) {
-        currenttimer = setInterval(() => {
-            currentposition += onepercent;
-            playbackcontroller.seekNext();
-        }, onepercent);
-    }
+    playbackcontroller.seekbar.seekToValue(position);
 }
 //Enum for all the different suburls(scopes) that can be used
 var Scopes;
@@ -386,7 +456,7 @@ class SpotifyApiGetRequest {
     /**
      * Executes the request
      *
-     * @param callback The function this function was orignally called from.
+     * @param callback The callback function to be called when the request has been executed. Needs to have a variable of the type SpotifyApiRequestResult as a parameter
      * @returns The result of the request as a parameter to the callback parameter.
      */
     execute(callback) {
@@ -982,7 +1052,7 @@ class SpotifyApiSaveAlbumsRequest extends SpotifyApiPutRequest {
             this.url = this.baseURL + "me/albums?ids=" + album_ids.join(",");
         }
         else {
-            this.url = this.baseURL + "me/abumns?ids=" + album_ids[0];
+            this.url = this.baseURL + "me/albums?ids=" + album_ids[0];
         }
     }
 }
@@ -1139,6 +1209,18 @@ class SpotifyApiTrackRequest extends SpotifyApiGetRequest {
         }
         else {
             this.url = this.baseURL + "tracks/" + track_id[0];
+        }
+    }
+}
+//SUBSECTION Subclasses related to retrieving information about users(s)
+class SpotifyApiUserRequest extends SpotifyApiGetRequest {
+    constructor(currentuser, user_id) {
+        super();
+        if (currentuser) {
+            this.url = this.baseURL + "me";
+        }
+        else {
+            this.url = this.baseURL + "users/" + user_id;
         }
     }
 }
