@@ -27,6 +27,13 @@ gulp.task('dev', function() {
         .pipe(gulp.dest(tsproj.projectDirectory));
 });
 
+gulp.task('ui', function() {
+    let proj = ts.createProject('ui/ts/tsconfig.json');
+    return tsproj.src()
+        .pipe(tsproj())
+        .pipe(gulp.dest(proj.projectDirectory));
+})
+
 gulp.task('compress', function(cb) {
     pump([
             gulp.src('ui/apiwrapper/js/script.js'),

@@ -1,0 +1,20 @@
+<div class="homepage">
+            <span class="homepage_header_text">
+                Good evening! What would you like to play today?
+            </span>
+            <div class="homepage_entry">
+                <span class="homepage_entry_header">
+                    Your recent queues:
+                </span><br>
+                <div class="homepage_entry_content">
+                    <div class="homepage_entry_single">
+                        <img class="homepage_entry_image" src="assets/images/ic_album_white_48px.svg" />
+                        <span class="homepage_entry_label">Unnamed</span>
+                    </div>
+                    <div class="homepage_entry_single">
+                        <img class="homepage_entry_image" src="assets/images/ic_album_white_48px.svg" />
+                        <span class="homepage_entry_label">Night</span>
+                    </div>
+                </div>
+            </div>
+        </div>

@@ -1,5 +1,5 @@
 //// <reference path="../elements/elements.ts" /> 
-import {Spinner, SpinnerOptions} from '../../node_modules/spin.js/spin';
+//import {Spinner, SpinnerOptions} from '../../node_modules/spin.js/spin';
 
 function createSidebarEntry(name : string) {
     let header = document.createElement("sidebar_element_header");
@@ -57,10 +57,11 @@ function createPlayBackControls(sidebarentry : HTMLDivElement) {
 }
 
 function createSpinner() {
-    let standardoptions : SpinnerOptions = {
+    let standardoptions = {
         lines: 8,
         length: 60,
         speed: 1.5
     }
-    return new Spinner(standardoptions);
+    //@ts-ignore
+    return new Spinner(standardoptions).spin();
 }

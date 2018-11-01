@@ -1,6 +1,6 @@
 {
     "compilerOptions" : {
-        "module": "es6",
+        "module": "amd",
         "outFile": "../js/ui.js",
         "pretty": true,
         "target": "es6",

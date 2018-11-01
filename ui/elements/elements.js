@@ -1,24 +1,44 @@
+///<reference path="../apiwrapper/ts/onload.ts" /> 
 //import * as fs from "fs";
 var fs = require('fs');
+/**
+ * Represents one instance of a custom element
+ */
 class CustomElement {
     constructor(name, elements) {
         this.content = [];
         this.name = name;
         this.content = elements;
     }
+    /**
+     * Populates the available slots in this custom element
+     * @param slots Array of slot elements, in order of appeareance
+     */
     populateSlots(slots) {
         var j = 0;
         for (var i = 0; i < this.content.length; i++) {
             var nodes = this.content[i].getElementsByTagName("*");
             for (var k = 0; k < nodes.length; k++) {
                 if (nodes[k].nodeName === "slot") {
+                    console.log(typeof slots[j]);
                     nodes[k].parentElement.replaceChild(slots[j++], nodes[k]);
                 }
             }
         }
     }
-    getElement(container) {
-        return this.appendChildren(container, this.content);
+    /**
+     * Will append this element in its current state to the provided container, or return a div containing the element. Thus, you should get the content of the div for the actual element
+     * @param container The container to append the element to
+     * @returns The container with the element appended to it
+     */
+    getElement(container, append = true) {
+        if (append) {
+            return this.appendChildren(container, this.content);
+        }
+        else {
+            let containerdiv = document.createElement("div");
+            return this.appendChildren(containerdiv, this.content);
+        }
     }
     appendChildren(container, childnodes) {
         for (var node of childnodes) {
@@ -55,6 +75,10 @@ class CustomElementsDatabase {
         let element = new CustomElement(elementname, content);
         this.elements[elementname] = element;
     }
+    /**
+     * @returns An instance of CustomElement representing an element.
+     * @param name Name of the element
+     */
     getElement(name) {
         return this.elements[name];
     }
@@ -62,10 +86,10 @@ class CustomElementsDatabase {
 var database;
 var elementlist;
 //Main startup function
-window.onload = () => {
+addLoadEvent(() => {
     database = new CustomElementsDatabase();
     getElementList();
-};
+});
 function getElementList() {
     fs.readFile(__dirname + '\\elements/elements-list.json', 'utf-8', (err, data) => {
         if (err) {

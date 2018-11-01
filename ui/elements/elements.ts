@@ -3,6 +3,9 @@
 //import * as fs from "fs";
 var fs = require('fs');
 
+/**
+ * Represents one instance of a custom element
+ */
 class CustomElement {
     name : string;
     content : Array<Element> = [];
@@ -12,6 +15,10 @@ class CustomElement {
         this.content = elements;
     }
 
+    /**
+     * Populates the available slots in this custom element
+     * @param slots Array of slot elements, in order of appeareance
+     */
     populateSlots(slots : Array<Element>) {
         var j = 0;
         for (var i = 0; i < this.content.length; i++) {
@@ -24,8 +31,18 @@ class CustomElement {
         }
     }
 
-    getElement(container : Element) {
-        return this.appendChildren(container, this.content);
+    /**
+     * Will append this element in its current state to the provided container, or return a div containing the element. Thus, you should get the content of the div for the actual element
+     * @param container The container to append the element to
+     * @returns The container with the element appended to it
+     */
+    getElement(container? : Element, append = true) {
+        if (append) {
+            return this.appendChildren(container, this.content);
+        } else {
+            let containerdiv = document.createElement("div");
+            return this.appendChildren(containerdiv, this.content);
+        }
     }
 
     appendChildren(container : Element, childnodes : Array<Element>) {
@@ -77,6 +94,10 @@ class CustomElementsDatabase {
         this.elements[elementname] = element;
     }
 
+    /**
+     * @returns An instance of CustomElement representing an element.   
+     * @param name Name of the element
+     */
     getElement(name : string) {
         return this.elements[name];
     }
