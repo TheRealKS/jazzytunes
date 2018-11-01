@@ -1,0 +1,30 @@
+#!!!#homepage-entry-single#!!!#critical
+<template id="homepage-entry-single">
+    <style>
+        .homepage_entry_single {
+            margin-left: 0.5em;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .homepage_entry_image {
+            border: white 1px solid;
+            border-radius: 4px;
+            width: 13vw;
+            max-height: 13vw;
+            cursor: pointer;
+        }
+
+        .homepage_entry_label {
+            width: 100%;
+            text-align: center;
+        }
+    </style>
+    <div id="begincontent"></div>
+    <div class="homepage_entry_single">
+        <slot class="homepage_entry_image" name="homepage_entry_header"></slot>
+        <slot class="homepage_entry_label" name="homepage_entry_label"></slot>
+    </div>
+</template>

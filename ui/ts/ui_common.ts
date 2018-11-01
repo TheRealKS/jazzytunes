@@ -1,4 +1,6 @@
-////<reference path="../elements/elements.ts" /> 
+//// <reference path="../elements/elements.ts" /> 
+import {Spinner, SpinnerOptions} from '../../node_modules/spin.js/spin';
+
 function createSidebarEntry(name : string) {
     let header = document.createElement("sidebar_element_header");
     let entryName = document.createElement("span");
@@ -52,4 +54,13 @@ function createPlayBackControls(sidebarentry : HTMLDivElement) {
     let box = sidebarentry.getElementsByClassName('sidebar_entry_content')[0];
 
     return element.getElement(box);
+}
+
+function createSpinner() {
+    let standardoptions : SpinnerOptions = {
+        lines: 8,
+        length: 60,
+        speed: 1.5
+    }
+    return new Spinner(standardoptions);
 }

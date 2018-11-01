@@ -1,4 +1,15 @@
-//All the actions to be executed on window load go here
-document.addEventListener("dom:loaded", function(){
-    document.getElementById("authorize").addEventListener("click", startAuthProcess);
-});
+function addLoadEvent(func : Function) {
+    var oldonload = window.onload;
+    if (typeof window.onload != 'function') {
+        //@ts-ignore
+      window.onload = func;
+    } else {
+      window.onload = function(ev) {
+        if (oldonload) {
+            //@ts-ignore
+          oldonload(ev);
+        }
+        func(ev);
+      }
+    }
+}

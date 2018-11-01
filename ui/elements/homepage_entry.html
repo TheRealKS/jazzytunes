@@ -1,0 +1,26 @@
+#!!!#homepage-entry#!!!#critical
+<template id="homepage-entry">
+    <style>
+        .homepage_entry {
+            font-size: 0.9em;
+            margin-top: 3vh;
+            border-radius: 3px;
+            background-color: #69625d;
+            width: 100%;
+        }
+
+        .homepage_entry_header {
+            margin-top: 1em;
+            margin-left: 0.5em;
+        }
+
+        .homepage_entry_content {
+            display: flex;
+        }
+    </style>
+    <div id="begincontent"></div>
+    <div class="homepage_entry">
+        <slot class="homepage_entry_header" name="homepage_entry_header"></slot><br>
+        <slot class="homepage_entry_content" name="homepage_entry_content"></slot>
+    </div>
+</template>

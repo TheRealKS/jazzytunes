@@ -8,5 +8,20 @@
         "name": "playback-controls-basic",
         "uri": "\\elements\\playback_controls_basic.html",
         "critical": true
+    },
+    {
+        "name": "homepage",
+        "uri": "\\elements\\homepage.html",
+        "critical": true
+    },
+    {
+        "name": "homepage-entry",
+        "uri": "\\elements\\homepage_entry.html",
+        "critical": true
+    },
+    {
+        "name": "homepage-entry-single",
+        "uri": "\\elements\\homepage_entry_single.html",
+        "critical": true
     }
 ]

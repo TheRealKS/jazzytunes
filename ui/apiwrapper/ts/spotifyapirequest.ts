@@ -815,6 +815,75 @@ class SpotifyApiTopRequest extends SpotifyApiGetRequest {
     }
 }
 
+//SUBSECTION Subclasses related to controlling the user's playback
+
+/**
+ * Used to get the users currently available devices
+ * 
+ * @class
+ * @extends SpotifyApiGetRequest
+ */
+
+class SpotifyApiDevicesRequest extends SpotifyApiGetRequest {
+    /**
+     * @constructs SpotifyApiDevicesRequest
+     */
+    constructor() {
+        super();
+        this.url = this.baseURL + "me/player/devices";
+    }
+}
+
+/**
+ * Used to get the users recently played tracks
+ * 
+ * @class
+ * @extends SpotifyApiGetRequest
+ */
+
+class SpotifyApiRecentTracksRequest extends SpotifyApiGetRequest {
+    /**
+     * @constructs SpotifyApiRecentTracksRequest
+     * @param limit The maximum amount of tracks to list. Can be between 1 and 50 (inclusive). If not specified, value will be 20
+     * @param after Unix Timestamp. If specified, this request will return all tracks played after this timestamp. If this parameter is specified, parameter limit must also be specified, but parameter before may not be specified
+     * @param before Unix Timestamp. If specified, this request will return all tracks played before this timestamp. If this paramter is specified, parameter limit must also be specified, but parameter after may not be specified
+     */
+    constructor(limit : number = 20, after? : number, before? : number) {
+        super();
+        if (limit >= 1 && limit <= 50) {
+            if (after) {
+                this.url = this.baseURL + "me/player/recently-played?limit=" + limit + "&after=" + after;
+            } else if (before) {
+                this.url = this.baseURL + "me/player/recently-played?limit=" + limit + "&before=" + before;
+            }
+        } else {
+            this.url = this.baseURL + "me/player/recently-played";
+        }
+    }
+}
+
+/**
+ * Used to transfer the users playback. Can only be used after a SpotifyApiDevicesRequest has been executed
+ * 
+ * @class
+ * @extends SpotifyApiGetRequest
+ */
+
+class SpotifyApiTransferPlaybackRequest extends SpotifyApiPutRequest {
+    /**
+     * @constructs SpotifyTransferPlaybackRequest
+     * @param device_ids Array with just one element: the device id of the device to transfer playback to
+     * @param play If specified, this parameter indicates whether playback should start or not when the playback has been transfered
+     */
+    constructor(device_ids : Array<string>, play : boolean = false) {
+        super();
+        let o = {
+            "device_ids": device_ids,
+            "play" : play
+        };
+    }
+}
+
 //SUBSECTION Subclasses related to manipulation and retrieving information about a user's playlists
 
 /**

@@ -1,3 +1,5 @@
+///<reference path="../apiwrapper/ts/onload.ts" /> 
+
 //import * as fs from "fs";
 var fs = require('fs');
 
@@ -84,10 +86,10 @@ var database : CustomElementsDatabase;
 var elementlist : any;
 
 //Main startup function
-window.onload = () => {
+addLoadEvent(() => {
     database = new CustomElementsDatabase();
     getElementList();
-}
+});
 
 function getElementList() {
     fs.readFile(__dirname + '\\elements/elements-list.json', 'utf-8', (err, data) => {

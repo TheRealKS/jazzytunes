@@ -1,5 +1,6 @@
 {
     "compilerOptions" : {
+        "module": "es6",
         "outFile": "../js/ui.js",
         "pretty": true,
         "target": "es6",

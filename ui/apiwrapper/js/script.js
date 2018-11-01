@@ -1,3 +1,33 @@
+//// <reference path="../apiwrapper/ts/spotifyapirequest.ts" />
+//// <reference path="../elements/elements.ts" /> 
+function initHome() {
+    let homepageheader = document.createElement("span");
+    homepageheader.slot = "homepage_header_text";
+    homepageheader.className = "homepage_header_text";
+    homepageheader.innerHTML = getHomepageHeaderText() + " What would you like to listen to?";
+    let slots = [homepageheader];
+    let element = database.getElement("homepage");
+    element.populateSlots(slots);
+    element.getElement(document.getElementById("content"));
+    let recentlyplayed = new SpotifyApiRecentTracksRequest(5);
+}
+function getHomepageHeaderText() {
+    let date = new Date();
+    let hourslocale = date.getUTCHours() + date.getTimezoneOffset();
+    if (hourslocale >= 7 && hourslocale < 12) {
+        return "Good morning!";
+    }
+    else if (hourslocale >= 12 && hourslocale < 17) {
+        return "Good afternoon!";
+    }
+    else if (hourslocale >= 17 && hourslocale < 23) {
+        return "Good evening!";
+    }
+    else if (hourslocale >= 23 && hourslocale < 7) {
+        return "Good night!";
+    }
+}
+///<reference path="../../ts/homepage.ts" /> 
 const electron = require('electron');
 const remote = electron.remote;
 const BrowserWindow = remote.BrowserWindow;
@@ -125,6 +155,7 @@ function requestAccesToken(authCode, refresh = false) {
             getUserDetails();
         }
         initPlayer();
+        initHome();
     });
 }
 function getUserDetails() {
@@ -139,57 +170,91 @@ function createProfile(result) {
         document.getElementById("user_picture").src = profile.images[0].url;
     }
 }
-//All the actions to be executed on window load go here
-document.addEventListener("dom:loaded", function () {
-    document.getElementById("authorize").addEventListener("click", startAuthProcess);
-});
-////<reference path="../elements/elements.ts" /> 
-function createSidebarEntry(name) {
-    let header = document.createElement("sidebar_element_header");
-    let entryName = document.createElement("span");
-    entryName.slot = "header_text";
-    entryName.innerHTML = name;
-    header.appendChild(entryName);
-    /* header.shadowRoot.childNodes[0].addEventListener("click", (event : Event) => {
-        let target : HTMLElement = <HTMLElement> event.target;
-        let entry = target.parentElement;
-        let childNodes = Array.from(entry.childNodes);
-        if (target.getAttribute("open")) {
-            childNodes.forEach((element : HTMLElement, index) => {
-                if (index > 0) {
-                    element.style.display = "none";
-                }
-            });
-            target.style.transform = "rotate(180deg)";
-        } else {
-            childNodes.forEach((element : HTMLElement, index) => {
-                if (index > 0) {
-                    element.style.display = "block";
-                }
-            });
-            target.style.transform = "rotate(0deg)";
+addLoadEvent(startAuthProcess);
+function addLoadEvent(func) {
+    var oldonload = window.onload;
+    if (typeof window.onload != 'function') {
+        //@ts-ignore
+        window.onload = func;
+    }
+    else {
+        window.onload = function (ev) {
+            if (oldonload) {
+                //@ts-ignore
+                oldonload(ev);
+            }
+            func(ev);
+        };
+    }
+}
+System.register("ts/ui_common", ["../../node_modules/spin.js/spin"], function (exports_1, context_1) {
+    "use strict";
+    var __moduleName = context_1 && context_1.id;
+    function createSidebarEntry(name) {
+        let header = document.createElement("sidebar_element_header");
+        let entryName = document.createElement("span");
+        entryName.slot = "header_text";
+        entryName.innerHTML = name;
+        header.appendChild(entryName);
+        /* header.shadowRoot.childNodes[0].addEventListener("click", (event : Event) => {
+            let target : HTMLElement = <HTMLElement> event.target;
+            let entry = target.parentElement;
+            let childNodes = Array.from(entry.childNodes);
+            if (target.getAttribute("open")) {
+                childNodes.forEach((element : HTMLElement, index) => {
+                    if (index > 0) {
+                        element.style.display = "none";
+                    }
+                });
+                target.style.transform = "rotate(180deg)";
+            } else {
+                childNodes.forEach((element : HTMLElement, index) => {
+                    if (index > 0) {
+                        element.style.display = "block";
+                    }
+                });
+                target.style.transform = "rotate(0deg)";
+            }
+        }); */
+        let span = document.createElement("span");
+        span.slot = "header_text";
+        span.innerHTML = name;
+        span.className = "header_text";
+        let slots = [span];
+        let element = database.getElement("sidebar-element-header");
+        element.populateSlots(slots);
+        let container = document.createElement("div");
+        container.className = "sidebar_entry";
+        container = element.getElement(container);
+        let contentbox = document.createElement("div");
+        contentbox.className = "sidebar_entry_content";
+        container.appendChild(contentbox);
+        return container;
+    }
+    function createPlayBackControls(sidebarentry) {
+        let element = database.getElement('playback-controls-basic');
+        let box = sidebarentry.getElementsByClassName('sidebar_entry_content')[0];
+        return element.getElement(box);
+    }
+    function createSpinner() {
+        let standardoptions = {
+            lines: 8,
+            length: 60,
+            speed: 1.5
+        };
+        return new spin_1.Spinner(standardoptions);
+    }
+    var spin_1;
+    return {
+        setters: [
+            function (spin_1_1) {
+                spin_1 = spin_1_1;
+            }
+        ],
+        execute: function () {
         }
-    }); */
-    let span = document.createElement("span");
-    span.slot = "header_text";
-    span.innerHTML = name;
-    span.className = "header_text";
-    let slots = [span];
-    let element = database.getElement("sidebar-element-header");
-    element.populateSlots(slots);
-    let container = document.createElement("div");
-    container.className = "sidebar_entry";
-    container = element.getElement(container);
-    let contentbox = document.createElement("div");
-    contentbox.className = "sidebar_entry_content";
-    container.appendChild(contentbox);
-    return container;
-}
-function createPlayBackControls(sidebarentry) {
-    let element = database.getElement('playback-controls-basic');
-    let box = sidebarentry.getElementsByClassName('sidebar_entry_content')[0];
-    return element.getElement(box);
-}
+    };
+});
 ///<reference path="../../ts/ui_common.ts" /> 
 //import '@typings/spotify-web-playback-sdk';
 class SeekBar {
@@ -1109,6 +1174,70 @@ class SpotifyApiTopRequest extends SpotifyApiGetRequest {
     constructor(type) {
         super();
         this.url = this.baseURL + "me/top/" + type;
+    }
+}
+//SUBSECTION Subclasses related to controlling the user's playback
+/**
+ * Used to get the users currently available devices
+ *
+ * @class
+ * @extends SpotifyApiGetRequest
+ */
+class SpotifyApiDevicesRequest extends SpotifyApiGetRequest {
+    /**
+     * @constructs SpotifyApiDevicesRequest
+     */
+    constructor() {
+        super();
+        this.url = this.baseURL + "me/player/devices";
+    }
+}
+/**
+ * Used to get the users recently played tracks
+ *
+ * @class
+ * @extends SpotifyApiGetRequest
+ */
+class SpotifyApiRecentTracksRequest extends SpotifyApiGetRequest {
+    /**
+     * @constructs SpotifyApiRecentTracksRequest
+     * @param limit The maximum amount of tracks to list. Can be between 1 and 50 (inclusive). If not specified, value will be 20
+     * @param after Unix Timestamp. If specified, this request will return all tracks played after this timestamp. If this parameter is specified, parameter limit must also be specified, but parameter before may not be specified
+     * @param before Unix Timestamp. If specified, this request will return all tracks played before this timestamp. If this paramter is specified, parameter limit must also be specified, but parameter after may not be specified
+     */
+    constructor(limit = 20, after, before) {
+        super();
+        if (limit >= 1 && limit <= 50) {
+            if (after) {
+                this.url = this.baseURL + "me/player/recently-played?limit=" + limit + "&after=" + after;
+            }
+            else if (before) {
+                this.url = this.baseURL + "me/player/recently-played?limit=" + limit + "&before=" + before;
+            }
+        }
+        else {
+            this.url = this.baseURL + "me/player/recently-played";
+        }
+    }
+}
+/**
+ * Used to transfer the users playback. Can only be used after a SpotifyApiDevicesRequest has been executed
+ *
+ * @class
+ * @extends SpotifyApiGetRequest
+ */
+class SpotifyApiTransferPlaybackRequest extends SpotifyApiPutRequest {
+    /**
+     * @constructs SpotifyTransferPlaybackRequest
+     * @param device_ids Array with just one element: the device id of the device to transfer playback to
+     * @param play If specified, this parameter indicates whether playback should start or not when the playback has been transfered
+     */
+    constructor(device_ids, play = false) {
+        super();
+        let o = {
+            "device_ids": device_ids,
+            "play": play
+        };
     }
 }
 //SUBSECTION Subclasses related to manipulation and retrieving information about a user's playlists

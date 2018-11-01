@@ -1,3 +1,4 @@
+///<reference path="../../ts/homepage.ts" /> 
 const electron = require('electron');
 const remote = electron.remote;
 const BrowserWindow = remote.BrowserWindow;
@@ -157,6 +158,7 @@ function requestAccesToken(authCode : string, refresh : boolean = false) {
             getUserDetails();
         }
         initPlayer();
+        initHome();
     });
 }
 
@@ -173,3 +175,5 @@ function createProfile(result : SpotifyApiRequestResult) {
         document.getElementById("user_picture").src = profile.images[0].url;
     }
 }
+
+addLoadEvent(startAuthProcess);
