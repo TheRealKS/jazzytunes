@@ -1,6 +1,16 @@
 //// <reference path="../elements/elements.ts" /> 
 //import {Spinner, SpinnerOptions} from '../../node_modules/spin.js/spin';
 
+enum ActionType {
+    PLAY,
+    INTENT
+}
+
+interface ActionPayload {
+    type : ActionType;
+    uri : string;
+}
+
 function createSidebarEntry(name : string) {
     let header = document.createElement("sidebar_element_header");
     let entryName = document.createElement("span");
@@ -35,12 +45,13 @@ function createSidebarEntry(name : string) {
     let slots = [span];
 
     let element = database.getElement("sidebar-element-header");
-    element.populateSlots(slots);
+    let celement = new CustomElement(element.name, element.content);
+    celement.populateSlots(slots);
 
     let container = document.createElement("div");
     container.className = "sidebar_entry";
 
-    container = element.getElement(container);
+    container = celement.getElement(container);
 
     let contentbox = document.createElement("div");
     contentbox.className = "sidebar_entry_content";
@@ -51,9 +62,10 @@ function createSidebarEntry(name : string) {
 
 function createPlayBackControls(sidebarentry : HTMLDivElement) {
     let element = database.getElement('playback-controls-basic');
+    let celement = new CustomElement(element.name, element.content);
     let box = sidebarentry.getElementsByClassName('sidebar_entry_content')[0];
 
-    return element.getElement(box);
+    return celement.getElement(box);
 }
 
 function createSpinner() {
@@ -61,7 +73,7 @@ function createSpinner() {
         lines: 8,
         length: 60,
         speed: 1.5
-    }
+    }   
     //@ts-ignore
     return new Spinner(standardoptions).spin();
 }

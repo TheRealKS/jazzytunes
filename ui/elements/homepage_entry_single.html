@@ -9,8 +9,14 @@
             flex-direction: column;
         }
 
-        .homepage_entry_image {
+        .homepage_entry_image_border {
             border: white 1px solid;
+            border-radius: 4px;
+            width: 13vw;
+            max-height: 13vw;
+        }
+
+        .homepage_entry_image {
             border-radius: 4px;
             width: 13vw;
             max-height: 13vw;
@@ -18,13 +24,17 @@
         }
 
         .homepage_entry_label {
-            width: 100%;
+            font-size: 0.5em;
+            width: 13vw;
             text-align: center;
         }
+
     </style>
     <div id="begincontent"></div>
     <div class="homepage_entry_single">
-        <slot class="homepage_entry_image" name="homepage_entry_image"></slot>
+        <div class="homepage_entry_image_border">
+            <slot class="homepage_entry_image" name="homepage_entry_image"></slot>
+        </div>
         <slot class="homepage_entry_label" name="homepage_entry_label"></slot>
     </div>
 </template>

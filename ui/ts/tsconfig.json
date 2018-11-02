@@ -4,8 +4,13 @@
         "outFile": "../js/ui.js",
         "pretty": true,
         "target": "es6",
-        "noImplicitAny": true
+        "noImplicitAny": true,
+        "composite": true
     },
+    "references": [
+        {"path": "../apiwrapper/ts"},
+        {"path": "../elements"} 
+    ],
     "include": [
         "*"
     ]

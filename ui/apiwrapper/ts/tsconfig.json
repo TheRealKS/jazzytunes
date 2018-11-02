@@ -5,10 +5,15 @@
         "target": "es6",
         "module": "system",
         "sourceMap": true,
-        "noImplicitAny": true
+        "noImplicitAny": true,
+        "composite": true
     },
+    "references": [
+        {"path": "../../ts"}
+    ],
     "include": [
         "onload.ts",
-        "*"
+        "*",
+        "../../ts/*.ts"
     ]
 }

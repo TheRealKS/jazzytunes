@@ -1,4 +1,4 @@
-///<reference path="../apiwrapper/ts/onload.ts" /> 
+////<reference path="../apiwrapper/ts/onload.ts" /> 
 
 //import * as fs from "fs";
 var fs = require('fs');
@@ -8,9 +8,9 @@ var fs = require('fs');
  */
 class CustomElement {
     name : string;
-    content : Array<Element> = [];
+    content : Array<Node> = [];
 
-    constructor(name : string, elements : Array<Element>) {
+    constructor(name : string, elements : Array<Node>) {
         this.name = name;
         this.content = elements;
     }
@@ -45,7 +45,7 @@ class CustomElement {
         }
     }
 
-    appendChildren(container : Element, childnodes : Array<Element>) {
+    appendChildren(container : Element, childnodes : Array<Node>) {
         for (var node of childnodes) {
             container.innerHTML += node.outerHTML;
         }
@@ -54,7 +54,24 @@ class CustomElement {
 }
 
 interface ElementsArray {
-    [key: string]: CustomElement;
+    [key: string]: CustomElementData;
+}
+
+class CustomElementData {
+    name : string;
+    content : Array<Element> = [];
+    constructor(name : string, content : Array<Element>) {
+        this.name = name;
+        this.content = content;
+    }
+
+    getContent() {
+        let newarray : Array<Node> = [];
+        for (var i = 0; i < this.content.length; i++) {
+            newarray[i] = this.content[i].cloneNode(true);
+        }
+        return newarray;
+    }
 }
 
 class CustomElementsDatabase {
@@ -89,13 +106,13 @@ class CustomElementsDatabase {
 
         this.styles.appendChild(stylesheet.childNodes[0]);
 
-        let element = new CustomElement(elementname, content);
+        let element = new CustomElementData(elementname, content);
 
         this.elements[elementname] = element;
     }
 
     /**
-     * @returns An instance of CustomElement representing an element.   
+     * @returns An instance of CustomElementData from which an element can be created 
      * @param name Name of the element
      */
     getElement(name : string) {

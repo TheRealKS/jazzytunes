@@ -4,7 +4,8 @@
         "module": "amd",
         "target": "es6",
         "sourceMap": false,
-        "noImplicitAny": true
+        "noImplicitAny": true,
+        "composite": true
     },
     "files": [
         "elements.ts"

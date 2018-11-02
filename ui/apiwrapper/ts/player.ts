@@ -165,6 +165,7 @@ class PlaybackController {
 }
 
 var player : Spotify.SpotifyPlayer;
+var playerid : string;
 var playbackcontroller : PlaybackController;
 
 function initPlayer() {
@@ -180,6 +181,15 @@ function initPlayer() {
     
         player.on('account_error', ({message}) => {
             alert("The account used to authorize does not have a valid Spotify Premium subscription!");
+        });
+
+        player.addListener('ready', ({device_id}) => {
+            playerid = device_id;
+            //Take ownership of the playback
+            let request = new SpotifyApiTransferPlaybackRequest([device_id], false);
+            request.execute((result) => {
+                initializePlayerUI(player);
+            });
         });
 
         player.addListener('player_state_changed', state => { 
@@ -198,8 +208,6 @@ function initPlayer() {
         });
     
         player.connect();
-    
-        initializePlayerUI(player);
     };
 }
 

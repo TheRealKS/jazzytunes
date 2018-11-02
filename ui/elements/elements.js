@@ -1,4 +1,4 @@
-///<reference path="../apiwrapper/ts/onload.ts" /> 
+////<reference path="../apiwrapper/ts/onload.ts" /> 
 //import * as fs from "fs";
 var fs = require('fs');
 /**
@@ -20,7 +20,6 @@ class CustomElement {
             var nodes = this.content[i].getElementsByTagName("*");
             for (var k = 0; k < nodes.length; k++) {
                 if (nodes[k].nodeName === "slot") {
-                    console.log(typeof slots[j]);
                     nodes[k].parentElement.replaceChild(slots[j++], nodes[k]);
                 }
             }
@@ -45,6 +44,20 @@ class CustomElement {
             container.innerHTML += node.outerHTML;
         }
         return container;
+    }
+}
+class CustomElementData {
+    constructor(name, content) {
+        this.content = [];
+        this.name = name;
+        this.content = content;
+    }
+    getContent() {
+        let newarray = [];
+        for (var i = 0; i < this.content.length; i++) {
+            newarray[i] = this.content[i].cloneNode(true);
+        }
+        return newarray;
     }
 }
 class CustomElementsDatabase {
@@ -72,11 +85,11 @@ class CustomElementsDatabase {
             }
         }
         this.styles.appendChild(stylesheet.childNodes[0]);
-        let element = new CustomElement(elementname, content);
+        let element = new CustomElementData(elementname, content);
         this.elements[elementname] = element;
     }
     /**
-     * @returns An instance of CustomElement representing an element.
+     * @returns An instance of CustomElementData from which an element can be created
      * @param name Name of the element
      */
     getElement(name) {

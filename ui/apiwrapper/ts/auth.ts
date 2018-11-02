@@ -1,4 +1,4 @@
-///<reference path="../../ts/homepage.ts" /> 
+////<reference path="../../ts/homepage.ts" /> 
 const electron = require('electron');
 const remote = electron.remote;
 const BrowserWindow = remote.BrowserWindow;
@@ -89,7 +89,8 @@ function startAuthProcess() {
         'user-library-modify',
         "user-read-birthdate", 
         "user-read-email",
-        "user-read-private"
+        "user-read-private",
+        "user-read-recently-played"
     ];
     var scopesstr = scopes.join(" ");
     scopesstr = encodeURIComponent(scopesstr);
