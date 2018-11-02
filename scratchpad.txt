@@ -18,3 +18,13 @@
                 </div>
             </div>
         </div>
+
+                <!--
+        <div class="authentication">
+            It looks like you are not authorized yet.
+            <div id="authorize" onclick="startAuthProcess();">
+                <div class="logo_img_holder"><img class="spotify_logo_img" src="assets/images/Spotify_Icon_CMYK_Black.png"></div>
+                <span id="auth_txt">Authorize with Spotify</span>
+            </div>
+        </div>
+    -->

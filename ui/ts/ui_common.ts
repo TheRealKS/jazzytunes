@@ -1,4 +1,5 @@
 //// <reference path="../elements/elements.ts" /> 
+//// <reference path="../apiwrapper/ts/spotifyapirequest.ts" />
 //import {Spinner, SpinnerOptions} from '../../node_modules/spin.js/spin';
 
 enum ActionType {
@@ -7,11 +8,11 @@ enum ActionType {
 }
 
 interface ActionPayload {
-    type : ActionType;
-    uri : string;
+    type: ActionType;
+    uri: string;
 }
 
-function createSidebarEntry(name : string) {
+function createSidebarEntry(name: string) {
     let header = document.createElement("sidebar_element_header");
     let entryName = document.createElement("span");
     entryName.slot = "header_text";
@@ -50,17 +51,24 @@ function createSidebarEntry(name : string) {
 
     let container = document.createElement("div");
     container.className = "sidebar_entry";
+    container.setAttribute('expanded', 'true');
 
     container = celement.getElement(container);
+
+    container.children[0].children[0].addEventListener('click', (target) => {
+        let t = target.target;
+        //@ts-ignore
+        toggleSidebarEntry(<HTMLElement>t.parentNode.parentNode, <HTMLElement>t);
+    });
 
     let contentbox = document.createElement("div");
     contentbox.className = "sidebar_entry_content";
     container.appendChild(contentbox);
 
-    return container
+    return container;
 }
 
-function createPlayBackControls(sidebarentry : HTMLDivElement) {
+function createPlayBackControls(sidebarentry: HTMLDivElement) {
     let element = database.getElement('playback-controls-basic');
     let celement = new CustomElement(element.name, element.content);
     let box = sidebarentry.getElementsByClassName('sidebar_entry_content')[0];
@@ -68,12 +76,27 @@ function createPlayBackControls(sidebarentry : HTMLDivElement) {
     return celement.getElement(box);
 }
 
-function createSpinner() {
-    let standardoptions = {
-        lines: 8,
-        length: 60,
-        speed: 1.5
-    }   
-    //@ts-ignore
-    return new Spinner(standardoptions).spin();
+function toggleSidebarEntry(entry: HTMLElement, icon: HTMLElement) {
+    if (entry.getAttribute('expanded') === 'true') {
+        for (var i = 1; i < entry.children.length; i++) {
+            entry.children[i].setAttribute('originaldisplay', entry.children[i].style.display);
+            entry.children[i].style.display = "none";
+        }
+        icon.style.transform = "rotate(180deg)";
+        entry.setAttribute('expanded', 'false');
+    } else {
+        for (var i = 1; i < entry.children.length; i++) {
+            entry.children[i].style.display = entry.children[i].getAttribute('originaldisplay');
+        }
+        icon.style.transform = "rotate(0deg)";
+        entry.setAttribute('expanded', 'true');
+    }
+}
+
+function testSearch() {
+    let request = new SpotifyApiSearchRequest(true, true, true, true, 10);
+    request.buildGeneralQuery(["fefe", "nicki"], false);
+    request.execute((result) => {
+        console.log(result);
+    });
 }

@@ -14,10 +14,6 @@ gulp.task('comp-ts', function() {
             .pipe(tsproj())
             .pipe(gulp.dest(tsproj.projectDirectory));
     }
-    let final = ts.createProject(projects[projects.length - 1]);
-    return final.src()
-        .pipe(tsproj())
-        .pipe(gulp.dest(tsproj.projectDirectory));
 });
 
 gulp.task('dev', function() {

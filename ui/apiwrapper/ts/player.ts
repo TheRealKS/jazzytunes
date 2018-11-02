@@ -1,4 +1,4 @@
-///<reference path="../../ts/ui_common.ts" /> 
+////<reference path="../../ts/ui_common.ts" /> 
 //import '@typings/spotify-web-playback-sdk';
 
 interface PlaybackParams {

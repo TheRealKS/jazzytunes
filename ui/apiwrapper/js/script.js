@@ -26,8 +26,9 @@ class ExpiringCredentials {
     }
     refresh() {
         let timeinms = this.expires_in * 1000;
-        let fn = requestAccesToken.bind(null, this.refresh_token, true);
-        this.refresher = setInterval(fn, timeinms);
+        this.refresher = setInterval(() => {
+            requestAccesToken(this.refresh_token, true);
+        }, timeinms);
     }
     set willRefresh(refresh) {
         if (refresh !== this.will_refresh) {
@@ -40,8 +41,10 @@ class ExpiringCredentials {
             }
         }
     }
-    revoke() {
+    revoke(authcode) {
         clearInterval(this.refresher);
+        this.refresh();
+        this.access_token = authcode;
     }
 }
 class CredentialsProvider {
@@ -101,6 +104,11 @@ function requestAccesToken(authCode, refresh = false) {
     let data = new URLSearchParams();
     data.append("grant_type", "authorization_code");
     data.append("code", authCode);
+    if (refresh) {
+        data.set("grant_type", "refresh_token");
+        data.delete("code");
+        data.append("refresh_token", authCode);
+    }
     data.append("redirect_uri", redurl);
     data.append("client_id", CLIENT_ID);
     data.append("client_secret", CLIENT_SECRET);
@@ -117,17 +125,16 @@ function requestAccesToken(authCode, refresh = false) {
     }).then(res => {
         //Process data;
         console.log("Authorized! Code = " + res.access_token);
-        let cred = new ExpiringCredentials(res.access_token, res.refresh_token, res.expires_in, true);
         if (refresh) {
-            credentials.expiringCredentials.revoke();
-            credentials.expiringCredentials = cred;
+            credentials.expiringCredentials.revoke(res.access_token);
         }
         else {
+            let cred = new ExpiringCredentials(res.access_token, res.refresh_token, res.expires_in, true);
             credentials.expiringCredentials = cred;
             getUserDetails();
+            initPlayer();
+            initHome();
         }
-        initPlayer();
-        initHome();
     });
 }
 function getUserDetails() {
@@ -143,73 +150,7 @@ function createProfile(result) {
     }
 }
 addLoadEvent(startAuthProcess);
-//// <reference path="../elements/elements.ts" /> 
-//import {Spinner, SpinnerOptions} from '../../node_modules/spin.js/spin';
-var ActionType;
-//// <reference path="../elements/elements.ts" /> 
-//import {Spinner, SpinnerOptions} from '../../node_modules/spin.js/spin';
-(function (ActionType) {
-    ActionType[ActionType["PLAY"] = 0] = "PLAY";
-    ActionType[ActionType["INTENT"] = 1] = "INTENT";
-})(ActionType || (ActionType = {}));
-function createSidebarEntry(name) {
-    let header = document.createElement("sidebar_element_header");
-    let entryName = document.createElement("span");
-    entryName.slot = "header_text";
-    entryName.innerHTML = name;
-    header.appendChild(entryName);
-    /* header.shadowRoot.childNodes[0].addEventListener("click", (event : Event) => {
-        let target : HTMLElement = <HTMLElement> event.target;
-        let entry = target.parentElement;
-        let childNodes = Array.from(entry.childNodes);
-        if (target.getAttribute("open")) {
-            childNodes.forEach((element : HTMLElement, index) => {
-                if (index > 0) {
-                    element.style.display = "none";
-                }
-            });
-            target.style.transform = "rotate(180deg)";
-        } else {
-            childNodes.forEach((element : HTMLElement, index) => {
-                if (index > 0) {
-                    element.style.display = "block";
-                }
-            });
-            target.style.transform = "rotate(0deg)";
-        }
-    }); */
-    let span = document.createElement("span");
-    span.slot = "header_text";
-    span.innerHTML = name;
-    span.className = "header_text";
-    let slots = [span];
-    let element = database.getElement("sidebar-element-header");
-    let celement = new CustomElement(element.name, element.content);
-    celement.populateSlots(slots);
-    let container = document.createElement("div");
-    container.className = "sidebar_entry";
-    container = celement.getElement(container);
-    let contentbox = document.createElement("div");
-    contentbox.className = "sidebar_entry_content";
-    container.appendChild(contentbox);
-    return container;
-}
-function createPlayBackControls(sidebarentry) {
-    let element = database.getElement('playback-controls-basic');
-    let celement = new CustomElement(element.name, element.content);
-    let box = sidebarentry.getElementsByClassName('sidebar_entry_content')[0];
-    return celement.getElement(box);
-}
-function createSpinner() {
-    let standardoptions = {
-        lines: 8,
-        length: 60,
-        speed: 1.5
-    };
-    //@ts-ignore
-    return new Spinner(standardoptions).spin();
-}
-///<reference path="../../ts/ui_common.ts" /> 
+////<reference path="../../ts/ui_common.ts" /> 
 //import '@typings/spotify-web-playback-sdk';
 class SeekBar {
     constructor(bar) {
@@ -345,6 +286,7 @@ function initPlayer() {
         });
         player.addListener('ready', ({ device_id }) => {
             playerid = device_id;
+            //Take ownership of the playback
             let request = new SpotifyApiTransferPlaybackRequest([device_id], false);
             request.execute((result) => {
                 initializePlayerUI(player);
@@ -1308,6 +1250,52 @@ class SpotifyApiCreatePlaylistRequest extends SpotifyApiPostRequest {
         super();
     }
 }
+class SpotifyApiSearchRequest extends SpotifyApiGetRequest {
+    constructor(album, artist, track, playlist, limit) {
+        super();
+        this.url = this.baseURL + "search?type=";
+        if (album)
+            this.url += "album";
+        if (artist)
+            this.url += ",artist";
+        if (track)
+            this.url += ",track";
+        if (playlist)
+            this.url += ',playlist';
+        if (limit)
+            this.url += "&limit=" + limit;
+    }
+    buildGeneralQuery(keywords, matchexact = false, exclude = [], include = []) {
+        this.query = "q=";
+        if (matchexact) {
+            this.query += "\"" + keywords.join("+") + "\"";
+            return;
+        }
+        this.query += keywords.join("+");
+        if (exclude.length > 0) {
+            this.query += "+NOT+" + exclude.join("+");
+        }
+        if (include.length > 0) {
+            this.query += "+OR+" + include.join("+");
+        }
+    }
+    buildFieldFilteredSearch(filters) {
+        this.query += "q=";
+        Object.keys(filters).forEach(element => {
+            //@ts-ignore
+            this.query += element + ":" + filters[element].replace(" ", "+") + "+";
+        });
+    }
+    execute(callback) {
+        if (this.query !== "" && this.query !== "q=") {
+            this.url += "&" + this.query;
+            super.execute(callback);
+        }
+        else {
+            callback(new SpotifyApiRequestResult(RequestStatus.UNRESOLVED, null, { "error": "Baldy formed request" }));
+        }
+    }
+}
 //SUBSECTION Subclasses related to retrieving information about Spotify tracks
 /**
 * Used to get Audio features for one or more tracks
@@ -1366,130 +1354,3 @@ class SpotifyApiUserRequest extends SpotifyApiGetRequest {
     }
 }
 //#endregion
-/// <reference path="../elements/elements.d.ts" />
-/// <reference path="../apiwrapper/js/script.d.ts" />
-var homepage;
-class HomePage {
-    constructor(header) {
-        this.entries = [];
-        this.header = header;
-        let element = database.getElement("homepage");
-        let celement = new CustomElement(element.name, element.getContent());
-        celement.populateSlots([header]);
-        this.holder = celement.getElement(null, false).children[0];
-    }
-    addEntry(headertext, entries) {
-        let header = document.createElement("slot");
-        header.slot = "homepage_entry_header";
-        header.className = "homepage_entry_header";
-        header.innerHTML = headertext;
-        let entry = new HomePageEntry(header, entries);
-        entry.create();
-        this.entries.push(entry);
-        this.entries[this.entries.length - 1].domTarget = this.holder.appendChild(entry.element);
-    }
-}
-class HomePageEntry {
-    constructor(header, entries) {
-        this.content = [];
-        this.header = header;
-        this.content = entries;
-    }
-    create() {
-        let element = database.getElement("homepage-entry");
-        let celement = new CustomElement(element.name, element.getContent());
-        let containerdiv = document.createElement("div");
-        containerdiv.className = "homepage_entry_content";
-        containerdiv.slot = "homepage_entry_content";
-        for (var el of this.content) {
-            containerdiv.appendChild(el.element);
-        }
-        celement.populateSlots([this.header, containerdiv]);
-        this.element = celement.getElement(null, false).children[0];
-    }
-    add(element) {
-        this.content.push(element);
-        this.domTarget.children[2].appendChild(element.element).addEventListener("click", element.action.bind(element.actionpayload));
-    }
-    clear() {
-        this.domTarget.children[2].innerHTML = "";
-    }
-}
-class HomePageInteractiveEntry {
-    constructor(imageuri, labeltxt, action, actionpayload, loader = false) {
-        this.imageuri = imageuri;
-        this.label = labeltxt;
-        this.loader = loader;
-        this.action = action;
-        this.actionpayload = actionpayload;
-        this.create();
-    }
-    create() {
-        let image = document.createElement("img");
-        image.src = this.imageuri;
-        image.slot = "homepage_entry_image";
-        if (this.loader) {
-            image.classList.add("homepage_entry_image", "spinning");
-        }
-        else {
-            image.className = "homepage_entry_image";
-        }
-        let header = document.createElement("span");
-        header.className = "homepage_entry_label";
-        header.slot = "homepage_entry_label";
-        header.innerHTML = this.label;
-        this.imgelement = image;
-        this.labelelement = header;
-        let singlentry = database.getElement("homepage-entry-single");
-        let celement = new CustomElement(singlentry.name, singlentry.getContent());
-        celement.populateSlots([image, header]);
-        this.element = celement.getElement(null, false).children[0];
-    }
-}
-function initHome() {
-    let homepageheader = document.createElement("span");
-    homepageheader.slot = "homepage_header_text";
-    homepageheader.className = "homepage_header_text";
-    homepageheader.innerHTML = getHomepageHeaderText() + " What would you like to listen to?";
-    let loader = new HomePageInteractiveEntry('assets/images/album_spin.svg', 'Loading...', () => { }, null, true);
-    homepage = new HomePage(homepageheader);
-    homepage.addEntry('Your recently played tracks:', [loader]);
-    homepage.domTarget = document.getElementById("content").appendChild(homepage.holder);
-    let recentlyplayed = new SpotifyApiRecentTracksRequest(5);
-    recentlyplayed.execute(createRecentTracksList);
-}
-function createRecentTracksList(result) {
-    var index = 0;
-    console.log(result.result);
-    homepage.entries[0].clear();
-    for (var item of result.result.items) {
-        let track = item.track;
-        let imageuri = track.album.images[0].url;
-        let payload = {
-            type: ActionType.PLAY,
-            uri: track.uri
-        };
-        let element = new HomePageInteractiveEntry(imageuri, track.name, playHomePageTrack, payload, false);
-        homepage.entries[0].add(element);
-    }
-}
-function getHomepageHeaderText() {
-    let date = new Date();
-    let hourslocale = date.getUTCHours() - (date.getTimezoneOffset() / 60);
-    if (hourslocale >= 7 && hourslocale < 12) {
-        return "Good morning!";
-    }
-    else if (hourslocale >= 12 && hourslocale < 17) {
-        return "Good afternoon!";
-    }
-    else if (hourslocale >= 17 && hourslocale < 23) {
-        return "Good evening!";
-    }
-    else if (hourslocale >= 23 && hourslocale < 7) {
-        return "Good night!";
-    }
-}
-function playHomePageTrack() {
-    let req = new SpotifyApiPlayRequest(false, null, null, [this.uri]);
-    req.execute((e) => { });
-}

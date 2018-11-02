@@ -45,8 +45,9 @@ class ExpiringCredentials {
 
     refresh() {
         let timeinms = this.expires_in * 1000;
-        let fn = requestAccesToken.bind(null, this.refresh_token, true) 
-        this.refresher = setInterval(fn, timeinms);
+        this.refresher = setInterval(() => {
+            requestAccesToken(this.refresh_token, true);
+        }, timeinms);
     }
 
     set willRefresh(refresh : boolean) {
@@ -60,8 +61,11 @@ class ExpiringCredentials {
         }
     }
 
-    revoke() {
+    revoke(authcode : string) {
         clearInterval(this.refresher);
+        this.refresh();
+        this.access_token = authcode;
+
     }
 }
 
@@ -134,6 +138,11 @@ function requestAccesToken(authCode : string, refresh : boolean = false) {
     let data = new URLSearchParams();
     data.append("grant_type", "authorization_code");
     data.append("code", authCode);
+    if (refresh) {
+        data.set("grant_type", "refresh_token");
+        data.delete("code");
+        data.append("refresh_token", authCode);
+    }
     data.append("redirect_uri", redurl);
     data.append("client_id", CLIENT_ID);
     data.append("client_secret", CLIENT_SECRET);
@@ -150,16 +159,15 @@ function requestAccesToken(authCode : string, refresh : boolean = false) {
     }).then(res => {
         //Process data;
         console.log("Authorized! Code = " + res.access_token);
-        let cred = new ExpiringCredentials(res.access_token, res.refresh_token, res.expires_in, true);
         if (refresh) {
-            credentials.expiringCredentials.revoke();
-            credentials.expiringCredentials = cred;
+            credentials.expiringCredentials.revoke(res.access_token);
         } else {
+            let cred = new ExpiringCredentials(res.access_token, res.refresh_token, res.expires_in, true);
             credentials.expiringCredentials = cred;
             getUserDetails();
+            initPlayer();
+            initHome();
         }
-        initPlayer();
-        initHome();
     });
 }
 

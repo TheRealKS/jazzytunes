@@ -994,6 +994,64 @@ class SpotifyApiCreatePlaylistRequest extends SpotifyApiPostRequest {
     }
 }
 
+//SUBSECTION Subclasses related to searching to Spotify library
+
+interface FieldFilters {
+    artist : string,
+    album : string,
+    track : string,
+    year : string,
+    tag : string,   
+    genre : string
+}
+
+class SpotifyApiSearchRequest extends SpotifyApiGetRequest {
+    query : string;
+    parameters : string;
+
+    constructor(album : boolean, artist : boolean, track : boolean, playlist : boolean, limit? : number) {
+        super();
+        this.url = this.baseURL + "search?type=";
+        if (album) this.url += "album";
+        if (artist) this.url += ",artist";
+        if (track) this.url += ",track";
+        if (playlist) this.url += ',playlist';
+        if (limit) this.url += "&limit=" + limit;
+    }
+
+    buildGeneralQuery(keywords : Array<string>, matchexact : boolean = false, exclude : Array<string> = [], include : Array<string> = []) {
+        this.query = "q=";
+        if (matchexact) {
+            this.query += "\"" + keywords.join("+") + "\"";
+            return;
+        }
+        this.query += keywords.join("+");
+        if (exclude.length > 0) {
+            this.query += "+NOT+" + exclude.join("+");
+        }
+        if (include.length > 0) {
+            this.query += "+OR+" + include.join("+");
+        }
+    }
+
+    buildFieldFilteredSearch(filters : FieldFilters) {
+        this.query += "q=";
+        Object.keys(filters).forEach(element => {
+            //@ts-ignore
+            this.query += element + ":" + filters[element].replace(" ", "+") + "+";
+        });
+    }
+
+    execute(callback : RequestCallbackFunction) {
+        if (this.query !== "" && this.query !== "q=") {
+            this.url += "&" + this.query;
+            super.execute(callback);
+        } else {
+            callback(new SpotifyApiRequestResult(RequestStatus.UNRESOLVED, null, {"error" : "Baldy formed request"}));
+        }
+    }
+}
+
 //SUBSECTION Subclasses related to retrieving information about Spotify tracks
 
 /**

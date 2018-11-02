@@ -159,6 +159,35 @@ body {
     overflow-wrap: break-word;
 }
 
+.navbar {
+    width: 80vw;
+    max-height: 10vh;
+    background-color: #69625d;
+    margin-left: -0.4vw;
+    display: flex;
+    align-content: center;
+    justify-content: space-between;
+}
+
+.nav_arrow {
+    margin-top: 2.5px;
+    margin-bottom: 2.5px;
+}
+
+.searchbox {
+    display: flex;
+    align-content: center;
+}
+
+.search_box {
+    margin-bottom: 3px;
+    margin-top: 3px;
+    border-radius: 4px;
+    margin-right: 0.4vw;
+    border: 1px black solid;
+    appearance: none;
+}
+
 .spinning {
     -webkit-animation-name: spin;
     -webkit-animation-duration: 800ms;

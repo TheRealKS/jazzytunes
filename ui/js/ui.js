@@ -1,12 +1,14 @@
+/// <reference path="../elements/elements.d.ts" />
+/// <reference path="../apiwrapper/js/script.d.ts" />
 var homepage;
 class HomePage {
     constructor(header) {
         this.entries = [];
         this.header = header;
         let element = database.getElement("homepage");
-        let celement = new CustomElement();
-        element.populateSlots([header]);
-        this.holder = element.getElement(null, false).children[0];
+        let celement = new CustomElement(element.name, element.getContent());
+        celement.populateSlots([header]);
+        this.holder = celement.getElement(null, false).children[0];
     }
     addEntry(headertext, entries) {
         let header = document.createElement("slot");
@@ -27,25 +29,31 @@ class HomePageEntry {
     }
     create() {
         let element = database.getElement("homepage-entry");
+        let celement = new CustomElement(element.name, element.getContent());
         let containerdiv = document.createElement("div");
         containerdiv.className = "homepage_entry_content";
         containerdiv.slot = "homepage_entry_content";
         for (var el of this.content) {
             containerdiv.appendChild(el.element);
         }
-        element.populateSlots([this.header, containerdiv]);
-        this.element = element.getElement(null, false).children[0];
+        celement.populateSlots([this.header, containerdiv]);
+        this.element = celement.getElement(null, false).children[0];
     }
     add(element) {
         this.content.push(element);
-        this.domTarget.children[2].appendChild(element.element);
+        this.domTarget.children[2].appendChild(element.element).addEventListener("click", element.action.bind(element.actionpayload));
+    }
+    clear() {
+        this.domTarget.children[2].innerHTML = "";
     }
 }
 class HomePageInteractiveEntry {
-    constructor(imageuri, labeltxt, loader = false) {
+    constructor(imageuri, labeltxt, action, actionpayload, loader = false) {
         this.imageuri = imageuri;
         this.label = labeltxt;
         this.loader = loader;
+        this.action = action;
+        this.actionpayload = actionpayload;
         this.create();
     }
     create() {
@@ -65,8 +73,9 @@ class HomePageInteractiveEntry {
         this.imgelement = image;
         this.labelelement = header;
         let singlentry = database.getElement("homepage-entry-single");
-        singlentry.populateSlots([image, header]);
-        this.element = singlentry.getElement(null, false).children[0];
+        let celement = new CustomElement(singlentry.name, singlentry.getContent());
+        celement.populateSlots([image, header]);
+        this.element = celement.getElement(null, false).children[0];
     }
 }
 function initHome() {
@@ -74,9 +83,9 @@ function initHome() {
     homepageheader.slot = "homepage_header_text";
     homepageheader.className = "homepage_header_text";
     homepageheader.innerHTML = getHomepageHeaderText() + " What would you like to listen to?";
-    let loader = new HomePageInteractiveEntry('assets/images/album_spin.svg', 'Loading...', true);
+    let loader = new HomePageInteractiveEntry('assets/images/album_spin.svg', 'Loading...', () => { }, null, true);
     homepage = new HomePage(homepageheader);
-    homepage.addEntry('Your recent tracks:', [loader]);
+    homepage.addEntry('Your recently played tracks:', [loader]);
     homepage.domTarget = document.getElementById("content").appendChild(homepage.holder);
     let recentlyplayed = new SpotifyApiRecentTracksRequest(5);
     recentlyplayed.execute(createRecentTracksList);
@@ -84,10 +93,15 @@ function initHome() {
 function createRecentTracksList(result) {
     var index = 0;
     console.log(result.result);
+    homepage.entries[0].clear();
     for (var item of result.result.items) {
         let track = item.track;
         let imageuri = track.album.images[0].url;
-        let element = new HomePageInteractiveEntry(imageuri, track.name, false);
+        let payload = {
+            type: ActionType.PLAY,
+            uri: track.uri
+        };
+        let element = new HomePageInteractiveEntry(imageuri, track.name, playHomePageTrack, payload, false);
         homepage.entries[0].add(element);
     }
 }
@@ -107,8 +121,18 @@ function getHomepageHeaderText() {
         return "Good night!";
     }
 }
+function playHomePageTrack() {
+    let req = new SpotifyApiPlayRequest(false, null, null, [this.uri]);
+    req.execute((e) => { });
+}
 //// <reference path="../elements/elements.ts" /> 
+//// <reference path="../apiwrapper/ts/spotifyapirequest.ts" />
 //import {Spinner, SpinnerOptions} from '../../node_modules/spin.js/spin';
+var ActionType;
+(function (ActionType) {
+    ActionType[ActionType["PLAY"] = 0] = "PLAY";
+    ActionType[ActionType["INTENT"] = 1] = "INTENT";
+})(ActionType || (ActionType = {}));
 function createSidebarEntry(name) {
     let header = document.createElement("sidebar_element_header");
     let entryName = document.createElement("span");
@@ -145,7 +169,13 @@ function createSidebarEntry(name) {
     celement.populateSlots(slots);
     let container = document.createElement("div");
     container.className = "sidebar_entry";
+    container.setAttribute('expanded', 'true');
     container = celement.getElement(container);
+    container.children[0].children[0].addEventListener('click', (target) => {
+        let t = target.target;
+        //@ts-ignore
+        toggleSidebarEntry(t.parentNode.parentNode, t);
+    });
     let contentbox = document.createElement("div");
     contentbox.className = "sidebar_entry_content";
     container.appendChild(contentbox);
@@ -157,12 +187,27 @@ function createPlayBackControls(sidebarentry) {
     let box = sidebarentry.getElementsByClassName('sidebar_entry_content')[0];
     return celement.getElement(box);
 }
-function createSpinner() {
-    let standardoptions = {
-        lines: 8,
-        length: 60,
-        speed: 1.5
-    };
-    //@ts-ignore
-    return new Spinner(standardoptions).spin();
+function toggleSidebarEntry(entry, icon) {
+    if (entry.getAttribute('expanded') === 'true') {
+        for (var i = 1; i < entry.children.length; i++) {
+            entry.children[i].setAttribute('originaldisplay', entry.children[i].style.display);
+            entry.children[i].style.display = "none";
+        }
+        icon.style.transform = "rotate(180deg)";
+        entry.setAttribute('expanded', 'false');
+    }
+    else {
+        for (var i = 1; i < entry.children.length; i++) {
+            entry.children[i].style.display = entry.children[i].getAttribute('originaldisplay');
+        }
+        icon.style.transform = "rotate(0deg)";
+        entry.setAttribute('expanded', 'true');
+    }
+}
+function testSearch() {
+    let request = new SpotifyApiSearchRequest(true, true, true, true, 10);
+    request.buildGeneralQuery(["fefe", "nicki"], false);
+    request.execute((result) => {
+        console.log(result);
+    });
 }
