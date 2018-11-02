@@ -100,21 +100,13 @@ function toggleVolumeControl() {
     let uinfo = document.getElementById('user_info');
     let bar = document.getElementById('volume_controller');
     if (volumecontrolopen) {
-        uinfo.style.width = "60%";
-        uinfo.style.flexGrow = "2";
         control.style.removeProperty('z-index');
-        control.style.removeProperty('margin-right');
         control.style.removeProperty("flex-grow");
         control.style.removeProperty('width');
-        bar.style.display = "none";
+        control.classList.remove("volume_button_expanded");
     } else {
-        uinfo.style.width = "25%";
-        uinfo.style.flexGrow = "1";
         control.style.zIndex = "999";
-        control.style.marginRight = "1vw";
-        control.style.flexGrow = "2";
-        control.style.width = "75%";
-        bar.style.display = "inline-block";
+        control.classList.add("volume_button_expanded");
     }
     volumecontrolopen = !volumecontrolopen;
 }
