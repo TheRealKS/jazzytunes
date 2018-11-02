@@ -2,6 +2,7 @@
 const electron = require('electron');
 const remote = electron.remote;
 const BrowserWindow = remote.BrowserWindow;
+const OPERATIONMODE = "production";
 
 var authWindow, redurl;
 var CLIENT_ID = "40918ae807d24a16a7f8217fa1f445c0";
@@ -185,4 +186,6 @@ function createProfile(result : SpotifyApiRequestResult) {
     }
 }
 
-addLoadEvent(startAuthProcess);
+if (electron.remote.process.argv[0] !== "debug") {
+    addLoadEvent(startAuthProcess);
+}

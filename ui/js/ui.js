@@ -133,6 +133,7 @@ var ActionType;
     ActionType[ActionType["PLAY"] = 0] = "PLAY";
     ActionType[ActionType["INTENT"] = 1] = "INTENT";
 })(ActionType || (ActionType = {}));
+var volumecontrolopen = false;
 function createSidebarEntry(name) {
     let header = document.createElement("sidebar_element_header");
     let entryName = document.createElement("span");
@@ -203,6 +204,45 @@ function toggleSidebarEntry(entry, icon) {
         icon.style.transform = "rotate(0deg)";
         entry.setAttribute('expanded', 'true');
     }
+}
+function toggleVolumeControl() {
+    let control = document.getElementById('volume_control');
+    let uinfo = document.getElementById('user_info');
+    let bar = document.getElementById('volume_controller');
+    if (volumecontrolopen) {
+        uinfo.style.width = "60%";
+        uinfo.style.flexGrow = "2";
+        control.style.removeProperty('z-index');
+        control.style.removeProperty('margin-right');
+        control.style.removeProperty("flex-grow");
+        control.style.removeProperty('width');
+        bar.style.display = "none";
+    }
+    else {
+        uinfo.style.width = "25%";
+        uinfo.style.flexGrow = "1";
+        control.style.zIndex = "999";
+        control.style.marginRight = "1vw";
+        control.style.flexGrow = "2";
+        control.style.width = "75%";
+        bar.style.display = "inline-block";
+    }
+    volumecontrolopen = !volumecontrolopen;
+}
+function setVolume() {
+    let bar = document.getElementById('volume_controller');
+    let icon = document.getElementById('volume_icon');
+    let newvol = bar.value;
+    if (newvol > 0.5) {
+        icon.innerHTML = "volume_up";
+    }
+    else if (newvol > 0 && newvol < 0.5) {
+        icon.innerHTML = "volume_down";
+    }
+    else if (newvol == 0) {
+        icon.innerHTML = "volume_mute";
+    }
+    player.setVolume(newvol);
 }
 function testSearch() {
     let request = new SpotifyApiSearchRequest(true, true, true, true, 10);
