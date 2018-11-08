@@ -23,5 +23,20 @@
         "name": "homepage-entry-single",
         "uri": "\\elements\\homepage_entry_single.html",
         "critical": true
+    },
+    {
+        "name": "searchresults",
+        "uri": "\\elements\\searchresults.html",
+        "critical": true
+    },
+    {
+        "name": "search-results-category",
+        "uri": "\\elements\\search_results_category.html",
+        "critical": true
+    },
+    {
+        "name": "search-results-entry",
+        "uri": "\\elements\\search_results_entry.html",
+        "critical": true
     }
 ]

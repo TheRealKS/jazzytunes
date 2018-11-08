@@ -1012,10 +1012,12 @@ class SpotifyApiSearchRequest extends SpotifyApiGetRequest {
     constructor(album : boolean, artist : boolean, track : boolean, playlist : boolean, limit? : number) {
         super();
         this.url = this.baseURL + "search?type=";
-        if (album) this.url += "album";
-        if (artist) this.url += ",artist";
-        if (track) this.url += ",track";
-        if (playlist) this.url += ',playlist';
+        let urlarray = [];
+        if (album) urlarray.push("album");
+        if (artist) urlarray.push("artist");
+        if (track) urlarray.push("track");
+        if (playlist) urlarray.push("playlist");
+        this.url += urlarray.join(",");
         if (limit) this.url += "&limit=" + limit;
     }
 

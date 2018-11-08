@@ -116,7 +116,6 @@ class HomePageInteractiveEntry {
 }
 
 function initHome() {
-    return;
     let homepageheader = document.createElement("span");
     homepageheader.slot = "homepage_header_text";
     homepageheader.className = "homepage_header_text";

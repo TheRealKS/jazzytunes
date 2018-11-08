@@ -1,0 +1,55 @@
+#!!!#search-results-entry#!!!#critical
+<template id="search-results-entry">
+    <style>
+        .search_results_entry {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            margin-top: 1em;
+        }
+
+        .search_results_entry_descriptor {
+            display: flex;
+            flex-direction: column;
+            justify-content: start;
+            margin-left: 1em;
+            cursor: pointer;
+        }
+
+
+        .search_results_entry_image {
+            width: 7vw;
+            min-height: 5vw;
+            cursor: pointer;
+        }
+
+        .search_results_entry_image:hover {
+            background-image: url("assets/images/album_spin.svg"); 
+        }
+
+        .search_results_entry_label {
+            color: gray;
+            font-size: 1.5em;
+        }
+
+        .search_results_entry_label:hover {
+            color: lightgray;
+        }
+        
+        .search_results_entry_label:active {
+            color: darkgray;
+        }
+
+        .subtext {
+            font-size: 1em;
+        }
+    </style>
+    <div id="begincontent"></div>
+    <div class="search_results_entry">
+        <slot name="search_results_entry_image" class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg"></slot>
+        <div class="search_results_entry_descriptor">
+            <slot name="search_results_entry_label" class="search_results_entry_label"></slot>
+            <slot name="search_results_entry_label_sub" class="search_results_entry_label subtext"></slot>
+        </div>
+    </div>
+</template>

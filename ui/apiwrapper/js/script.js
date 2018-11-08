@@ -153,6 +153,12 @@ function createProfile(result) {
 if (electron.remote.process.argv[0] !== "debug") {
     addLoadEvent(startAuthProcess);
 }
+var contentdom;
+function initContent() {
+    contentdom = document.getElementById("content");
+}
+function clearContent() {
+}
 ////<reference path="../../ts/ui_common.ts" /> 
 //import '@typings/spotify-web-playback-sdk';
 class SeekBar {
@@ -1257,14 +1263,16 @@ class SpotifyApiSearchRequest extends SpotifyApiGetRequest {
     constructor(album, artist, track, playlist, limit) {
         super();
         this.url = this.baseURL + "search?type=";
+        let urlarray = [];
         if (album)
-            this.url += "album";
+            urlarray.push("album");
         if (artist)
-            this.url += ",artist";
+            urlarray.push("artist");
         if (track)
-            this.url += ",track";
+            urlarray.push("track");
         if (playlist)
-            this.url += ',playlist';
+            urlarray.push("playlist");
+        this.url += urlarray.join(",");
         if (limit)
             this.url += "&limit=" + limit;
     }

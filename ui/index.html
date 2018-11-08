@@ -4,11 +4,11 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/common.css">
     <link rel="stylesheet" href="https://spin.js.org/spin.css">
-    <script src="js/spin.jss"></script>
-    <script src="apiwrapper/js/onload.jss"></script>
-    <script src="elements/elements.jss"></script>
-    <script src="js/ui.jss"></script>
-    <script src="apiwrapper/js/script.jss"></script>
+    <script src="js/spin.js"></script>
+    <script src="apiwrapper/js/onload.js"></script>
+    <script src="elements/elements.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="apiwrapper/js/script.js"></script>
 </head>
 
 <body>
@@ -32,106 +32,7 @@
             </div>
             <div class="searchbox">
                 <i class="material-icons nav_arrow">search</i>
-                <input type="text" class="search_box" placeholder="Search"> 
-            </div>
-        </div>
-
-        <div class="searchresults">
-            <span class="search_results_header">Results for query "MotorSport"</span>
-            <div class="search_results_categories">
-                <div class="search_results_category">
-                    <span class="search_results_category_header">Artists</span>
-                    <div class="search_results_category_entries">
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">    
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                    </div>
-                    <div class="search_results_category_more">See more</div>
-                </div>
-                <div class="search_results_category">
-                    <span class="search_results_category_header">Albums</span>
-                    <div class="search_results_category_entries">
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">    
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                    </div>
-                    <div class="search_results_category_more">See more</div>
-                </div>
-                <div class="search_results_category tracks">
-                    <span class="search_results_category_header">Tracks</span>    
-                    <div class="search_results_category_entries entries_track">
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">
-                            <div class="search_results_entry_descriptor">
-                                <span class="search_results_entry_label">Artist</span>
-                                <span class="search_results_entry_label subtext">Title</span>
-                            </div>
-                        </div>
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">    
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">    
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                        <div class="search_results_entry">
-                            <img class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg">
-                            <span class="search_results_entry_label">Artist</span>
-                        </div>
-                    </div> 
-                    <div class="search_results_category_more">See more</div>
-                </div>
+                <input id="searchbox" type="text" class="search_box" placeholder="Search"> 
             </div>
         </div>
     </div>

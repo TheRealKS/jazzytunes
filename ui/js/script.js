@@ -2,7 +2,7 @@
 const electron = require('electron');
 const remote = electron.remote;
 const BrowserWindow = remote.BrowserWindow;
-const OPERATIONMODE = "debug";
+const OPERATIONMODE = "production";
 var authWindow, redurl;
 var CLIENT_ID = "40918ae807d24a16a7f8217fa1f445c0";
 var CLIENT_SECRET = "b1506d8d8edf447a816d773def58a1c3";
@@ -152,6 +152,12 @@ function createProfile(result) {
 }
 if (electron.remote.process.argv[0] !== "debug") {
     addLoadEvent(startAuthProcess);
+}
+var contentdom;
+function initContent() {
+    contentdom = document.getElementById("content");
+}
+function clearContent() {
 }
 ////<reference path="../../ts/ui_common.ts" /> 
 //import '@typings/spotify-web-playback-sdk';

@@ -9,6 +9,7 @@ enum ActionType {
 
 interface ActionPayload {
     type : ActionType;
+    contexttype: string;
     uri: string;
 }
 

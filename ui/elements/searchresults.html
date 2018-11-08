@@ -1,0 +1,30 @@
+#!!!#searchresults#!!!#critical
+<template id="searchresults">
+    <style>
+        .searchresults {
+            margin-top: 1.5vh;
+            margin-left: 1.5vh;
+            margin-right: calc(1.5vh + 0.4vw);
+        }
+
+        .search_results_header {
+            font-size: 2em;
+            color: white;
+        }
+
+        .search_results_categories {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            grid-template-areas:
+                "artists albums"
+                "tracks tracks"
+                "playlists playlists";
+        }
+    </style>
+    <div id="begincontent"></div>
+    <div class="searchresults">
+        <slot name="search_results_header" class="search_results_header"></slot>
+        <slot name="search_results_categories" class="search_results_categories"></slot>
+    </div>
+</template>
