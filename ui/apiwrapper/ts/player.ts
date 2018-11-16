@@ -1,6 +1,12 @@
 ////<reference path="../../ts/ui_common.ts" /> 
 //import '@typings/spotify-web-playback-sdk';
 
+enum Repeat {
+    NO_REPEAT = "off",
+    REPEAT = "context",
+    REPEAT_ONCE = "track"
+}
+
 interface PlaybackParams {
     name : string,
     albumname : string,
@@ -98,6 +104,11 @@ class PlaybackController {
     playbutton : Element;
     nextbutton : Element;
     previousbutton : Element;
+    shufflebutton : Element;
+    repeatbutton : Element;
+
+    shuffling : boolean;
+    repeat : Repeat;
 
     constructor(sidebarEntry : Element) {
         this.sidebarentry = sidebarEntry;
@@ -119,6 +130,10 @@ class PlaybackController {
         this.nextbutton.addEventListener('click', nextTrack);
         this.previousbutton = children[1].children[0];
         this.previousbutton.addEventListener('click', previousTrack);
+        this.shufflebutton = children[0].children[0];
+        this.shufflebutton.addEventListener("click", setShuffle);
+        this.repeatbutton = children[4].children[0];
+        this.repeatbutton.addEventListener('click', setRepeat);
     }
 
     setImg(imguri : string) {
@@ -162,6 +177,29 @@ class PlaybackController {
     setCurrentTime(timestring : string) {
         this.timecurrent.innerHTML = timestring;
     }
+
+    setShuffle(state : boolean) {
+        let bttn = <HTMLElement>this.shufflebutton;
+        if (state) {
+            bttn.style.color = "#8BC34A";
+        } else {
+            bttn.style.color = "#EEEEEE";
+        }
+    }
+
+    setRepeat(state : Repeat) {
+        let bttn = <HTMLElement>this.repeatbutton;
+        if (state == Repeat.NO_REPEAT) {
+            bttn.innerHTML = "repeat";
+            bttn.style.color = "#EEEEEE";
+        } else if (state == Repeat.REPEAT) {
+            bttn.innerHTML = "repeat";
+            bttn.style.color = "#8BC34A";
+        } else {
+            bttn.innerHTML = "repeat_one";
+            bttn.style.color = "#8BC34A";
+        }
+    }
 }
 
 var player : Spotify.SpotifyPlayer;
@@ -193,6 +231,7 @@ function initPlayer() {
         });
 
         player.addListener('player_state_changed', state => { 
+            if (state) {
             let track = state.track_window.current_track;
             if (track.name != playbackcontroller.currenttrack) {
                 let params : PlaybackParams = {
@@ -205,6 +244,7 @@ function initPlayer() {
                 let trackrequest = new SpotifyApiTrackRequest([track.id]);
                 trackrequest.execute(updatePlayerUI);
             }
+            }   
         });
     
         player.connect();
@@ -264,4 +304,39 @@ function previousTrack(ev : Event) {
 function setPosition(position : number) {
     player.seek(position);
     playbackcontroller.seekbar.seekToValue(position);
+}
+
+function setShuffle() {
+    if (playbackcontroller.shuffling) {
+        let r = new SpotifyApiToggleShuffleRequest(false);
+        r.execute((er : SpotifyApiRequestResult) => {
+            if (er.status == RequestStatus.RESOLVED) {
+                playbackcontroller.setShuffle(false);
+            }
+        });
+    } else {
+        let r = new SpotifyApiToggleShuffleRequest(true);
+        r.execute((er : SpotifyApiRequestResult) => {
+            if (er.status == RequestStatus.RESOLVED) {
+                playbackcontroller.setShuffle(true);
+            }
+        });
+    }
+    playbackcontroller.shuffling = !playbackcontroller.shuffling;
+}
+
+function setRepeat() {
+    if (playbackcontroller.repeat == Repeat.NO_REPEAT) {
+        playbackcontroller.repeat = Repeat.REPEAT;
+    } else if (playbackcontroller.repeat == Repeat.REPEAT) {
+        playbackcontroller.repeat = Repeat.REPEAT_ONCE;
+    } else {
+        playbackcontroller.repeat = Repeat.NO_REPEAT;
+    }
+    let r = new SpotifyApiSetRepeatStateRequest(playbackcontroller.repeat);
+    r.execute((er: SpotifyApiRequestResult) => {
+        if (er.status == RequestStatus.RESOLVED) {
+            playbackcontroller.setRepeat(playbackcontroller.repeat);
+        }
+    });
 }

@@ -897,6 +897,9 @@ class SpotifyApiPlayRequest extends SpotifyApiPutRequest {
             if (context_offset) {
                 o.offset.position = context_offset;
             }
+            if (context_uri.indexOf("artist") !== -1) {
+                delete o.offset;
+            }
             this.body = o;
         } else {
             let o = {
@@ -908,7 +911,7 @@ class SpotifyApiPlayRequest extends SpotifyApiPutRequest {
 }
 
 /**
- * Used to transfer the users playback. Can only be used after a SpotifyApiDevicesRequest has been executed
+ * Used to transfer the users playback. Can only be used after a SpotifyApiDevicesRequest has been executed or if a device id is known.
  * 
  * @class
  * @extends SpotifyApiGetRequest
@@ -930,6 +933,50 @@ class SpotifyApiTransferPlaybackRequest extends SpotifyApiPutRequest {
         this.body = o;
     }
 }
+
+/**
+ * Used to toggle the players shuffling state
+ * 
+ * @class
+ * @extends SpotifyApiPutRequest
+ */
+
+class SpotifyApiToggleShuffleRequest extends SpotifyApiPutRequest {
+    /**
+     * @constructs SpotifyApiToggleShuffleRequest
+     * @param state The new shuffling state
+     * @param device_id Optional. Device id to set shuffling state on
+     */
+    constructor(state : boolean, device_id? : string) {
+        super();
+        this.url = this.baseURL + "me/player/shuffle?state=" + state.toString();
+        if (device_id) {
+            this.url += "&device_id=" + device_id;
+        }
+    }
+}
+
+/**
+ * Used to toggle the players shuffling state
+ * 
+ * @class
+ * @extends SpotifyApiPutRequest
+ */
+
+ class SpotifyApiSetRepeatStateRequest extends SpotifyApiPutRequest {
+     /**
+      * @constructs SpotifyApiSetRepeatStateRequest
+      * @param state The new repeating state
+      * @param device_id Optional. Device id to set repeating state on
+      */
+     constructor(state : Repeat, device_id? : string) {
+        super();
+        this.url = this.baseURL + "me/player/repeat?state=" + state;
+        if (device_id) {
+            this.url += "&device_id=" + device_id;
+        }
+     }
+ }
 
 //SUBSECTION Subclasses related to manipulation and retrieving information about a user's playlists
 

@@ -38,5 +38,20 @@
         "name": "search-results-entry",
         "uri": "\\elements\\search_results_entry.html",
         "critical": true
+    },
+    {
+        "name": "albumview",
+        "uri": "\\elements\\albumview.html",
+        "critical": true
+    },
+    {
+        "name": "albumheader",
+        "uri": "\\elements\\albumheader.html",
+        "critical": true
+    },
+    {
+        "name": "albumtrack",
+        "uri": "\\elements\\albumtrack.html",
+        "critical": true
     }
 ]

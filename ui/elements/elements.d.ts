@@ -4,20 +4,21 @@ declare var fs: any;
  */
 declare class CustomElement {
     name: string;
-    content: Array<Element>;
-    constructor(name: string, elements: Array<Element>);
+    content: Array<Node>;
+    constructor(name: string, elements: Array<Node>);
     /**
      * Populates the available slots in this custom element
      * @param slots Array of slot elements, in order of appeareance
      */
     populateSlots(slots: Array<Element>): void;
+    private replaceChild;
     /**
      * Will append this element in its current state to the provided container, or return a div containing the element. Thus, you should get the content of the div for the actual element
      * @param container The container to append the element to
      * @returns The container with the element appended to it
      */
     getElement(container?: Element, append?: boolean): Element;
-    appendChildren(container: Element, childnodes: Array<Element>): Element;
+    appendChildren(container: Element, childnodes: Array<Node>): Element;
 }
 interface ElementsArray {
     [key: string]: CustomElementData;

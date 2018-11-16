@@ -7,10 +7,16 @@ enum ActionType {
     INTENT
 }
 
+interface ContextParmaters {
+    offset: number
+}
+
 interface ActionPayload {
     type : ActionType;
     contexttype: string;
-    uri: string;
+    contextparams? : ContextParmaters,
+    uri: string,
+    id? : string
 }
 
 var volumecontrolopen = false;
@@ -112,7 +118,7 @@ function toggleVolumeControl() {
     volumecontrolopen = !volumecontrolopen;
 }
 
-function setVolume() {
+function setVolume(amount? : number) {
     let bar = document.getElementById('volume_controller');
     let icon = document.getElementById('volume_icon');
     let newvol = bar.value;
@@ -132,4 +138,8 @@ function testSearch() {
     request.execute((result) => {
         console.log(result);
     });
+}
+
+function span() {
+    return document.createElement("span");
 }

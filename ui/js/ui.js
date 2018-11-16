@@ -1,3 +1,200 @@
+/// /<reference path="../apiwrapper/ts/spotifyapirequest.ts" />
+///// <reference path="../elements/elements.d.ts" />
+var currentalbum;
+class AlbumView {
+    constructor(data) {
+        this.SEPARATOR = "&nbsp; | &nbsp;";
+        this.domTargetsTracks = [];
+        this.data = data;
+        this.create(1);
+    }
+    create(step) {
+        if (step === 1) {
+            let el = database.getElement("albumview");
+            let cel = new CustomElement(el.name, el.getContent());
+            let ell = cel.getElement(null, false).children[0];
+            this.createHeader();
+            ell.prepend(this.header);
+            let content = document.getElementById("content");
+            while (content.firstElementChild != content.lastElementChild) {
+                content.removeChild(content.lastElementChild);
+            }
+            this.domTargetMain = content.appendChild(ell);
+            this.domTargetImages = this.domTargetMain.firstChild.firstChild;
+        }
+        else if (step === 2) {
+            let holder = document.createElement("div");
+            holder.className = "albumenumeration";
+            let h = this.domTargetMain.appendChild(holder);
+            for (var i = 0; i < this.trackel.length; i++) {
+                let l = h.appendChild(this.trackel[i]);
+                let o = {
+                    type: ActionType.PLAY,
+                    contexttype: "album",
+                    contextparams: { offset: this.tracks[i].track_no },
+                    uri: this.data.uri
+                };
+                let d = {
+                    target: l,
+                    payload: o
+                };
+                this.domTargetsTracks.push(d);
+            }
+            this.create(3);
+        }
+        else if (step === 3) {
+            for (var i = 0; i < this.domTargetsTracks.length; i++) {
+                let target = this.domTargetsTracks[i].target;
+                let payload = this.domTargetsTracks[i].payload;
+                let f = () => {
+                    let r = new SpotifyApiPlayRequest(true, payload.uri, payload.contextparams.offset - 1);
+                    r.execute(() => { });
+                };
+                this.attachListener("click", f, target);
+                this.attachListener("mouseenter", hover, target);
+                this.attachListener("mouseout", unhover, target);
+            }
+        }
+    }
+    attachListener(type, action, target) {
+        target.addEventListener(type, action);
+    }
+    createHeader() {
+        let el = database.getElement("albumheader");
+        let cel = new CustomElement(el.name, el.getContent());
+        let cover = document.createElement("img");
+        cover.src = this.data.images[0];
+        cover.className = "albumcover";
+        cover.slot = "albumcover";
+        let albumname = span();
+        albumname.innerHTML = this.data.name;
+        albumname.className = "maintext";
+        albumname.slot = "maintext";
+        //@ts-ignore
+        $clamp(albumname, { clamp: 2, useNativeClamp: true });
+        let type = span();
+        type.innerHTML = capitalizeFirstLetter(this.data.type);
+        type.className = "type";
+        type.slot = "type";
+        let subtext = span();
+        subtext.innerHTML = this.data.artists.join(", ");
+        subtext.className = "subtext_al";
+        subtext.slot = "subtext";
+        let subsubtext = span();
+        subsubtext.innerHTML = rearrangeDate(this.data.release) + this.SEPARATOR + this.data.tracks + " tracks" + this.SEPARATOR + this.data.duration;
+        subsubtext.className = "subsubtext";
+        subsubtext.slot = "subsubtext";
+        let slots = [cover, type, albumname, subtext, subsubtext];
+        cel.populateSlots(slots);
+        this.header = cel.getElement(null, false);
+        this.header.className = "albumheader";
+    }
+    setTracks(e) {
+        this.tracks = e;
+    }
+    setTracksElements(e) {
+        this.trackel = e;
+    }
+}
+function createTracksDisplay(tracks) {
+    let items = tracks.items;
+    let tracklist = [];
+    let trackelements = [];
+    for (var i = 0; i < items.length; i++) {
+        let item = items[i];
+        let o = {
+            name: item.name,
+            duration: item.duration_ms,
+            features: [],
+            track_no: item.track_number
+        };
+        tracklist.push(o);
+        let name = span();
+        name.innerHTML = o.name;
+        name.className = "trackdetail";
+        let duration = span();
+        duration.innerHTML = secondsToTimeString(Math.round(o.duration / 1000));
+        duration.className = "trackdetail";
+        let el = database.getElement("albumtrack");
+        let cel = new CustomElement(el.name, el.getContent());
+        cel.populateSlots([name, duration]);
+        let fel = cel.getElement(null, false);
+        fel.className = "albumtrack";
+        trackelements.push(fel);
+    }
+    currentalbum.setTracks(tracklist);
+    currentalbum.setTracksElements(trackelements);
+    currentalbum.create(2);
+}
+function createAlbumView(res) {
+    if (res.status == RequestStatus.RESOLVED) {
+        let data = res.result;
+        let artists = [];
+        for (var i = 0; i < data.artists.length; i++) {
+            artists.push(data.artists[i].name);
+        }
+        let images = [];
+        for (var i = 0; i < data.images.length; i++) {
+            images.push(data.images[i].url);
+        }
+        let o = {
+            type: "album",
+            name: data.name,
+            artists: artists,
+            images: images,
+            release: data.release_date,
+            tracks: data.tracks.items.length,
+            duration: 0,
+            uri: data.uri
+        };
+        currentalbum = new AlbumView(o);
+        createTracksDisplay(data.tracks);
+    }
+}
+function displayAlbum(id) {
+    let req = new SpotiyApiAlbumRequest(id, []);
+    req.execute(createAlbumView);
+}
+function hover(ev) {
+    let t = ev.target;
+    if (t) {
+        t.children[1].classList.add("front");
+        t.children[0].style.display = "inline-block";
+    }
+}
+function unhover(ev) {
+    let t = ev.target;
+    if (t) {
+        t.children[0].style.display = "none";
+        t.children[1].classList.remove("front");
+    }
+}
+/**
+ * To convert from a data in American (bad) format to good format
+ * @param date Date in bad format
+ */
+function rearrangeDate(date) {
+    let parts = date.split("-");
+    parts.reverse();
+    let s = "";
+    for (var i = 0; i < parts.length; i++) {
+        if (i != parts.length - 1) {
+            s += parts[i] + "-";
+        }
+        else {
+            s += parts[i];
+        }
+    }
+    return s;
+}
+/**
+ * To captialize the first letter of a string
+ * @param s String to capitalize the first letter of
+ */
+function capitalizeFirstLetter(s) {
+    let f = s.charAt(0).toUpperCase();
+    return f + s.substr(1);
+}
 /// <reference path="../elements/elements.d.ts" />
 /// <reference path="../apiwrapper/js/script.d.ts" />
 var homepage;
@@ -161,7 +358,7 @@ class SearchResults {
         this.element = this.celement.getElement(null, false).children[0];
         this.categories.forEach(element => {
             element.finalise();
-            this.element.appendChild(element.htmlelement);
+            this.element.children[1].appendChild(element.htmlelement);
         });
     }
     attach() {
@@ -196,7 +393,7 @@ class SearchResultsCategory {
             let a = holder.appendChild(element.element);
         });
         this.element.populateSlots([this.header, holder]);
-        this.htmlelement = this.element.getElement(null, false);
+        this.htmlelement = this.element.getElement(null, false).children[0];
         this.seemorebutton = this.htmlelement.getElementsByClassName("search_results_category_more")[0];
         this.seemorepayload = {
             "type": ActionType.INTENT,
@@ -265,7 +462,8 @@ function buildArtistAlbumSearchResult(result) {
             let textpayload = {
                 "type": ActionType.INTENT,
                 "contexttype": "album",
-                "uri": albums[i].uri
+                "uri": albums[i].uri,
+                id: albums[i].id
             };
             let image = document.createElement("img");
             image.slot = "search_results_entry_image";
@@ -290,7 +488,6 @@ function buildArtistAlbumSearchResult(result) {
         }
         currentresults.addCategory(cat);
         currentresults.addCategory(catt);
-        currentresults.attach();
     }
 }
 function buildCategory(htxt) {
@@ -308,15 +505,49 @@ function buildTracksPlaylistsSearchResult(result) {
         let playlists = result.result.playlists.items;
         let trackscategory = buildCategory("Tracks");
         let playlistscategory = buildCategory("Playlists");
+        var category1 = new SearchResultsCategory(Category.TRACKS, trackscategory.element, trackscategory.header, tracks.next);
+        for (var i = 0; i < tracks.length; i++) {
+            let image = document.createElement("img");
+            image.slot = "search_results_entry_image";
+            image.className = "search_results_entry_image";
+            image.src = "assets/images/ic_album_white_48px.svg";
+            if (tracks[i].album.images.length > 0) {
+                image.src = tracks[i].album.images[0].url;
+            }
+            let descriptor = document.createElement("span");
+            descriptor.slot = "search_results_entry_label";
+            descriptor.className = "search_results_entry_label";
+            descriptor.innerHTML = tracks[i].name;
+            let element = database.getElement("search-results-entry");
+            let celement = new CustomElement(element.name, element.getContent());
+            celement.populateSlots([image, descriptor, document.createElement("span")]);
+            let imagepayload = {
+                "type": ActionType.PLAY,
+                "contexttype": "track",
+                "uri": tracks[i].uri
+            };
+            let textpayload = {
+                "type": ActionType.INTENT,
+                "contexttype": "track",
+                "uri": tracks[i].uri,
+            };
+            let sentry = new SearchResultsEntry(Category.TRACKS, celement, image, descriptor, imagepayload, textpayload);
+            category1.addEntry(sentry);
+            sentry = null;
+            delete { celement }.celement;
+        }
+        currentresults.addCategory(category1);
+        currentresults.attach();
     }
 }
 function attachEventListeners(a) {
     let children = a.children;
-    for (var i = 2; i < currentresults.categories.length + 2; i++) {
-        let currentcategory = children[i];
+    let cats = children[1].children;
+    for (var i = 0; i < currentresults.categories.length; i++) {
+        let currentcategory = cats[i];
         let entries = currentcategory.getElementsByClassName("search_results_category_entries")[0].children;
         for (var j = 0; j < entries.length; j++) {
-            let entrydata = currentresults.categories[i - 2].entries[j];
+            let entrydata = currentresults.categories[i].entries[j];
             let entry = entries[j];
             entry.getElementsByClassName("search_results_entry_image")[0].addEventListener("click", function () {
                 if (this.contexttype == "album" || this.contexttype == "artist") {
@@ -329,6 +560,9 @@ function attachEventListeners(a) {
                 }
             }.bind(entrydata.textactionpayload));
             entry.getElementsByClassName("search_results_entry_descriptor")[0].addEventListener("click", function () {
+                if (this.contexttype == "album") {
+                    displayAlbum(this.id);
+                }
             }.bind(entrydata.textactionpayload));
         }
     }
@@ -462,7 +696,7 @@ function toggleVolumeControl() {
     }
     volumecontrolopen = !volumecontrolopen;
 }
-function setVolume() {
+function setVolume(amount) {
     let bar = document.getElementById('volume_controller');
     let icon = document.getElementById('volume_icon');
     let newvol = bar.value;
@@ -483,4 +717,7 @@ function testSearch() {
     request.execute((result) => {
         console.log(result);
     });
+}
+function span() {
+    return document.createElement("span");
 }

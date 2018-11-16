@@ -260,3 +260,118 @@ body {
         transform:rotate(360deg);
     }
 }
+
+.albumview {
+    margin-top: 1.5vh;
+    margin-left: -0.4vw;
+}
+
+.albumheader {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px gray solid;
+    padding-bottom: 1.5vh; 
+    padding-left: 1.5vh;
+}
+
+.albumactions {
+    display: flex;
+    flex-direction: row;
+}
+
+.albumtextinfo {
+    display: flex;
+    flex-direction: column;
+    color: white;
+}
+
+.albumcover {
+    width: 15vw;
+    min-height: 15vw;
+    justify-self: flex-start;
+    margin-right: 1.5vh;
+    box-shadow: 1px 1px 1px 1px #212121;
+}
+
+.maintext {
+    font-size: 3em;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+}
+
+.subtext_al {
+    font-size: 2em;
+    margin-bottom: 10px;
+    color: c9cdd3;
+}
+
+.albumactions {
+    color: white; 
+    background-color: #443b35;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 1vh;
+    border-bottom: 1px gray solid;
+}   
+
+.playbttn {
+        border-radius: 10px;
+        width: 15vw;
+        border: 2px green solid;
+        text-align: center; 
+        font-size: 1.3em;
+        margin-right: 5vw;
+}
+
+.savebttn {
+    border-radius: 10px;
+    width: 15vw;
+    border: 2px green solid;
+    text-align: center; 
+    font-size: 1.3em;
+    margin-right: 5vw;
+}
+
+.albumenumerationheader {
+    margin-left: 2vh;
+    margin-right: 2vh;
+    margin-top: 2vh;
+    font-size: 1.4em;
+    color: white;
+    padding-left: 8px;
+    padding-right: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.albumenumeration {
+    margin-left: 2vh;
+    margin-right: 2vh;
+    margin-top: 2vh;
+    color: #f2f3f7;
+    padding: 5px;
+}
+
+.trackdetail.front {
+    margin-right: auto;
+}
+
+.play {
+    margin-right: 1vh;
+    display: none;
+}
+
+.albumtrack {
+    font-size: 1.2em;
+    border-top: 1px #c2c3c6 solid;
+    padding: 5px;
+    padding-bottom: 1vh;
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.albumtrack:hover {
+    background-color: #69625d;
+}

@@ -161,6 +161,14 @@ function clearContent() {
 }
 ////<reference path="../../ts/ui_common.ts" /> 
 //import '@typings/spotify-web-playback-sdk';
+var Repeat;
+////<reference path="../../ts/ui_common.ts" /> 
+//import '@typings/spotify-web-playback-sdk';
+(function (Repeat) {
+    Repeat["NO_REPEAT"] = "off";
+    Repeat["REPEAT"] = "context";
+    Repeat["REPEAT_ONCE"] = "track";
+})(Repeat || (Repeat = {}));
 class SeekBar {
     constructor(bar) {
         this.seekbar = bar;
@@ -241,6 +249,10 @@ class PlaybackController {
         this.nextbutton.addEventListener('click', nextTrack);
         this.previousbutton = children[1].children[0];
         this.previousbutton.addEventListener('click', previousTrack);
+        this.shufflebutton = children[0].children[0];
+        this.shufflebutton.addEventListener("click", setShuffle);
+        this.repeatbutton = children[4].children[0];
+        this.repeatbutton.addEventListener('click', setRepeat);
     }
     setImg(imguri) {
         this.imgholder.src = imguri;
@@ -276,6 +288,30 @@ class PlaybackController {
     setCurrentTime(timestring) {
         this.timecurrent.innerHTML = timestring;
     }
+    setShuffle(state) {
+        let bttn = this.shufflebutton;
+        if (state) {
+            bttn.style.color = "#8BC34A";
+        }
+        else {
+            bttn.style.color = "#EEEEEE";
+        }
+    }
+    setRepeat(state) {
+        let bttn = this.repeatbutton;
+        if (state == Repeat.NO_REPEAT) {
+            bttn.innerHTML = "repeat";
+            bttn.style.color = "#EEEEEE";
+        }
+        else if (state == Repeat.REPEAT) {
+            bttn.innerHTML = "repeat";
+            bttn.style.color = "#8BC34A";
+        }
+        else {
+            bttn.innerHTML = "repeat_one";
+            bttn.style.color = "#8BC34A";
+        }
+    }
 }
 var player;
 var playerid;
@@ -302,17 +338,19 @@ function initPlayer() {
             });
         });
         player.addListener('player_state_changed', state => {
-            let track = state.track_window.current_track;
-            if (track.name != playbackcontroller.currenttrack) {
-                let params = {
-                    "name": track.name,
-                    "albumcoveruri": track.album.images[0].url,
-                    "albumname": track.album.name,
-                    "artists": track.artists
-                };
-                playbackcontroller.setNewParams(params);
-                let trackrequest = new SpotifyApiTrackRequest([track.id]);
-                trackrequest.execute(updatePlayerUI);
+            if (state) {
+                let track = state.track_window.current_track;
+                if (track.name != playbackcontroller.currenttrack) {
+                    let params = {
+                        "name": track.name,
+                        "albumcoveruri": track.album.images[0].url,
+                        "albumname": track.album.name,
+                        "artists": track.artists
+                    };
+                    playbackcontroller.setNewParams(params);
+                    let trackrequest = new SpotifyApiTrackRequest([track.id]);
+                    trackrequest.execute(updatePlayerUI);
+                }
             }
         });
         player.connect();
@@ -367,6 +405,42 @@ function previousTrack(ev) {
 function setPosition(position) {
     player.seek(position);
     playbackcontroller.seekbar.seekToValue(position);
+}
+function setShuffle() {
+    if (playbackcontroller.shuffling) {
+        let r = new SpotifyApiToggleShuffleRequest(false);
+        r.execute((er) => {
+            if (er.status == RequestStatus.RESOLVED) {
+                playbackcontroller.setShuffle(false);
+            }
+        });
+    }
+    else {
+        let r = new SpotifyApiToggleShuffleRequest(true);
+        r.execute((er) => {
+            if (er.status == RequestStatus.RESOLVED) {
+                playbackcontroller.setShuffle(true);
+            }
+        });
+    }
+    playbackcontroller.shuffling = !playbackcontroller.shuffling;
+}
+function setRepeat() {
+    if (playbackcontroller.repeat == Repeat.NO_REPEAT) {
+        playbackcontroller.repeat = Repeat.REPEAT;
+    }
+    else if (playbackcontroller.repeat == Repeat.REPEAT) {
+        playbackcontroller.repeat = Repeat.REPEAT_ONCE;
+    }
+    else {
+        playbackcontroller.repeat = Repeat.NO_REPEAT;
+    }
+    let r = new SpotifyApiSetRepeatStateRequest(playbackcontroller.repeat);
+    r.execute((er) => {
+        if (er.status == RequestStatus.RESOLVED) {
+            playbackcontroller.setRepeat(playbackcontroller.repeat);
+        }
+    });
 }
 //Enum for all the different suburls(scopes) that can be used
 var Scopes;
@@ -1171,6 +1245,9 @@ class SpotifyApiPlayRequest extends SpotifyApiPutRequest {
             if (context_offset) {
                 o.offset.position = context_offset;
             }
+            if (context_uri.indexOf("artist") !== -1) {
+                delete o.offset;
+            }
             this.body = o;
         }
         else {
@@ -1182,7 +1259,7 @@ class SpotifyApiPlayRequest extends SpotifyApiPutRequest {
     }
 }
 /**
- * Used to transfer the users playback. Can only be used after a SpotifyApiDevicesRequest has been executed
+ * Used to transfer the users playback. Can only be used after a SpotifyApiDevicesRequest has been executed or if a device id is known.
  *
  * @class
  * @extends SpotifyApiGetRequest
@@ -1201,6 +1278,46 @@ class SpotifyApiTransferPlaybackRequest extends SpotifyApiPutRequest {
             "play": play
         };
         this.body = o;
+    }
+}
+/**
+ * Used to toggle the players shuffling state
+ *
+ * @class
+ * @extends SpotifyApiPutRequest
+ */
+class SpotifyApiToggleShuffleRequest extends SpotifyApiPutRequest {
+    /**
+     * @constructs SpotifyApiToggleShuffleRequest
+     * @param state The new shuffling state
+     * @param device_id Optional. Device id to set shuffling state on
+     */
+    constructor(state, device_id) {
+        super();
+        this.url = this.baseURL + "me/player/shuffle?state=" + state.toString();
+        if (device_id) {
+            this.url += "&device_id=" + device_id;
+        }
+    }
+}
+/**
+ * Used to toggle the players shuffling state
+ *
+ * @class
+ * @extends SpotifyApiPutRequest
+ */
+class SpotifyApiSetRepeatStateRequest extends SpotifyApiPutRequest {
+    /**
+     * @constructs SpotifyApiSetRepeatStateRequest
+     * @param state The new repeating state
+     * @param device_id Optional. Device id to set repeating state on
+     */
+    constructor(state, device_id) {
+        super();
+        this.url = this.baseURL + "me/player/repeat?state=" + state;
+        if (device_id) {
+            this.url += "&device_id=" + device_id;
+        }
     }
 }
 //SUBSECTION Subclasses related to manipulation and retrieving information about a user's playlists

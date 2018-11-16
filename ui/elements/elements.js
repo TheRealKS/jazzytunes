@@ -16,13 +16,40 @@ class CustomElement {
      */
     populateSlots(slots) {
         var j = 0;
+        var slts = [];
         for (var i = 0; i < this.content.length; i++) {
-            var nodes = this.content[i].getElementsByTagName("*");
-            for (var k = 0; k < nodes.length; k++) {
-                if (nodes[k].nodeName === "slot") {
-                    nodes[k].parentElement.replaceChild(slots[j++], nodes[k]);
-                }
+            if (this.content[i].nodeName === "slot") {
+                slts.push(this.content[i]);
+                continue;
             }
+            //@ts-ignore
+            var nodes = Array.from(this.content[i].getElementsByTagName("*"));
+            slts = slts.concat(nodes);
+        }
+        for (var k = 0; k < slts.length; k++) {
+            if (slts[k].nodeName === "slot") {
+                let replaced = false;
+                for (var l = 0; l < slots.length; l++) {
+                    if (slots[l].slot) {
+                        if (slts[k].slot === slots[l].slot) {
+                            this.replaceChild(slots[l], slts[k]);
+                            replaced = true;
+                            j++;
+                        }
+                    }
+                }
+                if (!replaced)
+                    this.replaceChild(slots[j++], slts[k]);
+            }
+        }
+    }
+    replaceChild(child, childtoreplace) {
+        if (childtoreplace.parentElement) {
+            childtoreplace.parentElement.replaceChild(child, childtoreplace);
+        }
+        else {
+            let i = this.content.indexOf(childtoreplace);
+            this.content[i] = child;
         }
     }
     /**

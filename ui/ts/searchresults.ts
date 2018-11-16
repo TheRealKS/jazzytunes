@@ -53,7 +53,7 @@ class SearchResults {
 
         this.categories.forEach(element => {
             element.finalise();
-            this.element.appendChild(element.htmlelement);
+            this.element.children[1].appendChild(element.htmlelement);
         });
     }
 
@@ -103,7 +103,7 @@ class SearchResultsCategory {
         });
 
         this.element.populateSlots([this.header, holder]);
-        this.htmlelement = <HTMLElement>this.element.getElement(null, false);
+        this.htmlelement = <HTMLElement>this.element.getElement(null, false).children[0];
 
         this.seemorebutton = <HTMLDivElement>this.htmlelement.getElementsByClassName("search_results_category_more")[0];
         this.seemorepayload = {
@@ -192,7 +192,8 @@ function buildArtistAlbumSearchResult(result : SpotifyApiRequestResult) {
             let textpayload : ActionPayload = {
                 "type": ActionType.INTENT,
                 "contexttype": "album",
-                "uri": albums[i].uri
+                "uri": albums[i].uri,
+                id: albums[i].id
             };
 
             let image = document.createElement("img");
@@ -221,7 +222,6 @@ function buildArtistAlbumSearchResult(result : SpotifyApiRequestResult) {
         }
         currentresults.addCategory(cat);
         currentresults.addCategory(catt);
-        currentresults.attach();
     }
 }
 
@@ -242,16 +242,55 @@ function buildTracksPlaylistsSearchResult(result : SpotifyApiRequestResult) {
         let playlists = result.result.playlists.items;
         let trackscategory = buildCategory("Tracks");
         let playlistscategory = buildCategory("Playlists");
+        var category1 = new SearchResultsCategory(Category.TRACKS, trackscategory.element, trackscategory.header, tracks.next);
+        for (var i = 0; i < tracks.length; i++) {
+            let image = document.createElement("img");
+            image.slot = "search_results_entry_image";
+            image.className = "search_results_entry_image";
+            image.src = "assets/images/ic_album_white_48px.svg";
+            if (tracks[i].album.images.length > 0) {
+                image.src = tracks[i].album.images[0].url;
+            }
+
+            let descriptor = document.createElement("span");
+            descriptor.slot = "search_results_entry_label";
+            descriptor.className = "search_results_entry_label";
+            descriptor.innerHTML = tracks[i].name;
+
+            let element = database.getElement("search-results-entry");
+            let celement = new CustomElement(element.name, <Array<Element>>element.getContent());
+            celement.populateSlots([image, descriptor, document.createElement("span")]);
+            
+            let imagepayload : ActionPayload = {
+                "type": ActionType.PLAY,
+                "contexttype": "track",
+                "uri": tracks[i].uri
+            };
+
+            let textpayload : ActionPayload = {
+                "type": ActionType.INTENT,
+                "contexttype": "track",
+                "uri": tracks[i].uri,
+            };
+
+            let sentry = new SearchResultsEntry(Category.TRACKS, celement, image, descriptor, imagepayload, textpayload);
+            category1.addEntry(sentry);
+            sentry = null;
+            delete {celement}.celement;
+        }
+        currentresults.addCategory(category1);
+        currentresults.attach();
     }
 }
 
 function attachEventListeners(a : HTMLDivElement) {
     let children = a.children;
-    for (var i = 2; i < currentresults.categories.length + 2; i++) {
-        let currentcategory = children[i];
+    let cats = children[1].children;
+    for (var i = 0; i < currentresults.categories.length; i++) {
+        let currentcategory = cats[i];
         let entries = currentcategory.getElementsByClassName("search_results_category_entries")[0].children;
         for (var j = 0; j < entries.length; j++) {
-            let entrydata = currentresults.categories[i - 2].entries[j];
+            let entrydata = currentresults.categories[i].entries[j];
             let entry = entries[j];
             entry.getElementsByClassName("search_results_entry_image")[0].addEventListener("click", function() {
                 if (this.contexttype == "album" || this.contexttype == "artist") {
@@ -263,7 +302,9 @@ function attachEventListeners(a : HTMLDivElement) {
                 }
             }.bind(entrydata.textactionpayload));
             entry.getElementsByClassName("search_results_entry_descriptor")[0].addEventListener("click", function() {
-
+                if (this.contexttype == "album") {
+                    displayAlbum(this.id);
+                }
             }.bind(entrydata.textactionpayload));
         }
     }
