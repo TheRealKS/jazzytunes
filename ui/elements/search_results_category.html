@@ -2,51 +2,23 @@
 <template id="search-results-category">
     <style>
         .search_results_category {
-            margin-top: 2vh;
-            width: 100%;
-            justify-self: center;
+            width: 99%;
+            padding: 1vw;
+            font-size: 1.5em;
             display: flex;
-            flex-direction: column;
-        }
-
-        .tracks {
-            margin-top: 4vh;
-            grid-column: tracks / tracks;
-            width: 100%;
+            flex-wrap: wrap;
+            flex-basis: 99%;
         }
 
         .search_results_category_header {
-            color: gray;
-            font-size: 1.5em;
-        }
-
-        .search_results_category_entries {
-            border-top: 1px darkgray solid;
-            width: 90%;
-            grid-column: 1 1;
-            display: inline-grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            justify-items: stretch;
-        }
-
-        .entries_track {
-            display: inline-grid;
-            grid-template-columns: repeat(5, 1fr);
-            grid-template-rows: 1fr 1fr;
-            width: 95%;
+            width: 50%;
+            border-bottom: 1px #c9cdd3 solid;
         }
 
         .search_results_category_more {
-            margin-top: 2vh;
-            border-radius: 4px;
-            border: 3px gray solid;
-            max-width: 10vw;
-            text-align: center;
-            vertical-align: center;
-            color: white;
-            font-size: 1.5em;
-            background-color: #69625d;
+            width: 50%;
+            text-align: right;
+            border-bottom: 1px #c9cdd3 solid;
             cursor: pointer;
         }
 
@@ -61,7 +33,6 @@
     <div id="begincontent"></div>
     <div class="search_results_category">
         <slot class="search_results_category_header" name="search_results_category_header"></slot>
-        <slot class="search_results_category_entries" name="search_results_category_entries"></slot>
-        <div class="search_results_category_more">See more</div>
+        <span class="search_results_category_more">See more</span>
     </div>
 </template>

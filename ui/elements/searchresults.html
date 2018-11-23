@@ -2,29 +2,23 @@
 <template id="searchresults">
     <style>
         .searchresults {
-            margin-top: 1.5vh;
-            margin-left: 1.5vh;
-            margin-right: calc(1.5vh + 0.4vw);
+            display: flex;
+            justify-content: center;
+            margin-left: -0.4vw;
+            overflow: hidden;
+            flex-wrap: wrap;
+            color: #c9cdd3;
         }
 
         .search_results_header {
+            width: 100%;
             font-size: 2em;
-            color: white;
-        }
-
-        .search_results_categories {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr 1fr;
-            grid-template-areas:
-                "artists albums"
-                "tracks tracks"
-                "playlists playlists";
+            margin-left: 0.9vw;
+            margin-top: 0.4vw;
         }
     </style>
     <div id="begincontent"></div>
     <div class="searchresults">
         <slot name="search_results_header" class="search_results_header"></slot>
-        <slot name="search_results_categories" class="search_results_categories"></slot>
     </div>
 </template>

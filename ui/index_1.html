@@ -1,0 +1,91 @@
+<html>
+
+<head>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/common.css">
+    <link rel="stylesheet" href="https://spin.js.org/spin.css">
+    <script src="js/clamp.js"></script>
+    <script src="test.js"></script>
+</head>
+
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="credentials">
+            <div id="user_info" class="user_info" id="user_info">
+                <img id="user_picture" class="user_picture" src="assets/images/baseline-account_circle-24px.svg" alt="assets/images/baseline-account_circle-24px.svg">
+                <span id="user_name"></span>
+            </div>
+            <div class="volume_button" id="volume_control">
+                <i class="material-icons volume_button_icon" onclick="toggleVolumeControl();" id="volume_icon">volume_up</i>
+                <input type="range" class="volume_controller" id="volume_controller" step="0.01" min="0" max="1" oninput="setVolume();">
+            </div>
+        </div>
+    </div>
+    <div class="content" id="content">
+        <div class="navbar">
+            <div>
+                <i class="material-icons nav_arrow">arrow_back</i>
+                <i class="material-icons nav_arrow">arrow_forward</i>
+            </div>
+            <div class="searchbox">
+                <i class="material-icons nav_arrow">search</i>
+                <input id="searchbox" type="text" class="search_box" placeholder="Search">
+            </div>
+        </div>
+        <div class="searchresults">
+            <span class="search_results_header">Results for query: Search</span>
+            <div class="search_results_category">
+                <span class="search_results_category_header">Albums</span>
+                <span class="search_results_more">See more</span>
+                <div class="search_results_entry">
+                    <img class="search_results_entry_img" src="https://i.scdn.co/image/16152677d2b566e0db8d2cadbbe021c4d1c6caee">
+                    <div class="search_results_entry_description">
+                        <span class="search_results_entry_label">Tango in the night</span>
+                        <span class="search_results_entry_label sub">Fleetwood Mac</span>
+                    </div>
+                </div>
+                <div class="search_results_entry">
+                    <img class="search_results_entry_img" src="https://i.scdn.co/image/16152677d2b566e0db8d2cadbbe021c4d1c6caee">
+                    <div class="search_results_entry_description">
+                        <span class="search_results_entry_label">Tango in the night</span>
+                        <span class="search_results_entry_label sub">Fleetwood Mac</span>
+                    </div>
+                </div>
+                <div class="search_results_entry">
+                    <img class="search_results_entry_img" src="https://i.scdn.co/image/16152677d2b566e0db8d2cadbbe021c4d1c6caee">
+                    <div class="search_results_entry_description">
+                        <span class="search_results_entry_label">Tango in the night</span>
+                        <span class="search_results_entry_label sub">Fleetwood Mac</span>
+                    </div>
+                </div>
+                <div class="search_results_entry">
+                    <img class="search_results_entry_img" src="https://i.scdn.co/image/16152677d2b566e0db8d2cadbbe021c4d1c6caee">
+                    <div class="search_results_entry_description">
+                        <span class="search_results_entry_label">Tango in the night</span>
+                        <span class="search_results_entry_label sub">Fleetwood Mac</span>
+                    </div>
+                </div>
+            </div>
+            <div class="search_results_category">
+                <span class="search_results_category_header">Artists</span>
+                <span class="search_results_more">See more</span>
+                <div class="search_results_entry">
+                    <img class="search_results_entry_img" src="https://i.scdn.co/image/16152677d2b566e0db8d2cadbbe021c4d1c6caee">
+                    <div class="search_results_entry_description">
+                        <span class="search_results_entry_label">Tango in the night</span>
+                        <span class="search_results_entry_label sub">Fleetwood Mac</span>
+                    </div>
+                </div>
+                <div class="search_results_entry">
+                    <img class="search_results_entry_img" src="https://i.scdn.co/image/16152677d2b566e0db8d2cadbbe021c4d1c6caee">
+                    <div class="search_results_entry_description">
+                        <span class="search_results_entry_label">Tango in the night</span>
+                        <span class="search_results_entry_label sub">Fleetwood Mac</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
