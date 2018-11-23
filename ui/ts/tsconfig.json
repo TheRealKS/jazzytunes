@@ -4,8 +4,7 @@
         "outFile": "../js/ui.js",
         "pretty": true,
         "target": "es6",
-        "noImplicitAny": true,
-        "composite": true
+        "noImplicitAny": true
     },
     "include": [
         "*"

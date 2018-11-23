@@ -108,7 +108,7 @@ class PlaybackController {
     repeatbutton : Element;
 
     shuffling : boolean;
-    repeat : Repeat;
+    repeat : Repeat = Repeat.NO_REPEAT;
 
     constructor(sidebarEntry : Element) {
         this.sidebarentry = sidebarEntry;
@@ -163,13 +163,13 @@ class PlaybackController {
     }
 
     play() {
-        this.controls.children[2].children[0].innerHTML = "play_arrow";
+        this.controls.children[2].children[0].innerHTML = "pause";
         this.seekbar.toggleTimer(true);
         player.togglePlay();
     }
 
     pause() {
-        this.controls.children[2].children[0].innerHTML = "pause";
+        this.controls.children[2].children[0].innerHTML = "play_arrow";
         this.seekbar.toggleTimer(false);
         player.pause();
     }

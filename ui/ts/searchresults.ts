@@ -3,10 +3,10 @@
 var queryrunning : NodeJS.Timer;
 
 enum Category {
-    ALBUMS,
-    ARTISTS,
-    TRACKS,
-    PLAYLISTS
+    ALBUMS = "Albums",
+    ARTISTS = "Artists",
+    TRACKS = "Tracks",
+    PLAYLISTS = "Playlists"
 }
 
 class SearchResults {
@@ -35,12 +35,8 @@ class SearchResults {
         let header = document.createElement("span");
         header.slot = "search_results_header";
         header.className = "search_results_header";
-        header.innerHTML = "Results for query \"" + this.query + "\"";
+        header.innerHTML = "Results for query: \"" + this.query + "\"";
         this.header = header;
-
-        this.categoryholder = document.createElement("div");
-        this.categoryholder.slot = "search_results_categories";
-        this.categoryholder.className = "search_results_categories";
 
         let element = database.getElement('searchresults');
         let celement = new CustomElement(element.name, <Array<Element>>element.getContent());
@@ -48,12 +44,12 @@ class SearchResults {
     }
 
     finalise() {
-        this.celement.populateSlots([this.header, this.categoryholder]);
+        this.celement.populateSlots([this.header]);
         this.element = <HTMLDivElement>this.celement.getElement(null, false).children[0];
 
         this.categories.forEach(element => {
             element.finalise();
-            this.element.children[1].appendChild(element.htmlelement);
+            this.element.appendChild(element.htmlelement);
         });
     }
 
@@ -64,7 +60,7 @@ class SearchResults {
             content.removeChild(content.lastElementChild);
         }
         let a = content.appendChild(this.element);
-        attachEventListeners(a);
+        attachEventListeners(this);
     }
 
     addCategory(element : SearchResultsCategory) {
@@ -75,16 +71,15 @@ class SearchResults {
 class SearchResultsCategory {
     categorytype : Category;
     seemorebutton : HTMLDivElement;
-    seemorepayload : ActionPayload;
     header : HTMLSpanElement;
-    nexturl : string;
+    nexturl : ActionPayload;
     entries : Array<SearchResultsEntry> = [];
     element : CustomElement;
     htmlelement : HTMLElement;
 
-    constructor(type : Category, element : CustomElement, header : HTMLSpanElement, nexturl : string) {
+    constructor(type : Category, element : CustomElement, header : HTMLSpanElement, next : ActionPayload) {
         this.categorytype = type;
-        this.nexturl = nexturl;
+        this.nexturl = next;
         this.element = element;
         this.header = header;
     }
@@ -94,24 +89,17 @@ class SearchResultsCategory {
     }
     
     finalise() {
-        let holder = document.createElement("div");
-        holder.slot = "search_results_category_entries";
-        holder.className = "search_results_category_entries";
-
-        this.entries.forEach(element => {
-            let a = holder.appendChild(element.element);
-        });
-
-        this.element.populateSlots([this.header, holder]);
+        this.element.populateSlots([this.header]);
         this.htmlelement = <HTMLElement>this.element.getElement(null, false).children[0];
 
+        this.entries.forEach(element => {
+            let a = this.htmlelement.appendChild(element.element);
+            element.domtarget = (a);
+            element.fetchDomTargets();
+        });
+
         this.seemorebutton = <HTMLDivElement>this.htmlelement.getElementsByClassName("search_results_category_more")[0];
-        this.seemorepayload = {
-            "type": ActionType.INTENT,
-            "contexttype": "moreresults",
-            "uri": this.nexturl
-        };
-        this.seemorebutton.addEventListener("click", function() {}.bind(this.seemorepayload));
+        this.seemorebutton.addEventListener("click", function() {}.bind(this.nexturl));
     }
 }
 
@@ -126,6 +114,9 @@ class SearchResultsEntry {
     customelement : CustomElement;
     element : HTMLElement;
 
+    domtarget : Node;
+    domtargets : {image : Node, maintext : Node, subtext : Node};
+
     constructor(type : Category, customelement : CustomElement, imageelement : HTMLImageElement, labelelement : HTMLSpanElement, imgpayload : ActionPayload, textpayload : ActionPayload) {
         this.type = type;
         this.imageelement = imageelement;
@@ -135,94 +126,66 @@ class SearchResultsEntry {
         this.customelement = customelement;
         this.element = <HTMLElement>customelement.getElement(null, false).children[0];
     }
+
+    fetchDomTargets() {
+        let image = this.domtarget.children[0];
+        let text = this.domtarget.children[1];
+        let maintext = text.children[0];
+        let subtext = text.children[1];
+        this.domtargets = {image : image, maintext : maintext, subtext : subtext};
+    }
 }
+
+interface SearchresultsObject {
+    type : Category,
+    items : Array<SearchresultsEntryObject>
+    morepayload : ActionPayload
+};
+
+interface SearchresultsEntryObject {
+    image: string,
+    maintext : string,
+    subtext : string,
+    imagepayload : ActionPayload,
+    maintextpayload : ActionPayload,
+    subtextpayload : ActionPayload
+};
 
 var currentresults : SearchResults;
 
-function buildArtistAlbumSearchResult(result : SpotifyApiRequestResult) {
-    if (result.status == RequestStatus.RESOLVED) {
-        let artists = result.result.artists.items;
-        let albums = result.result.albums.items;
-        let artistcategory = buildCategory("Artists");
-        let albumscategory = buildCategory("Albums");
-        let cat = new SearchResultsCategory(Category.ARTISTS, artistcategory.element, artistcategory.header, artists.next);
-        for (var i = 0; i < artists.length; i++) {
+function buildSearchResults(items : Array<SearchresultsObject>) {
+    for (var item of items) {
+        let cat = buildCategory(item.type);
+        var category = new SearchResultsCategory(item.type, cat.element, cat.header, item.morepayload);
+        for (var entry of item.items) {
             let image = document.createElement("img");
             image.slot = "search_results_entry_image";
             image.className = "search_results_entry_image";
             image.src = "assets/images/ic_album_white_48px.svg";
-            if (artists[i].images.length > 0) {
-                image.src = artists[i].images[0].url;
+            if (entry.image) {
+                image.src = entry.image;
             }
 
             let descriptor = document.createElement("span");
             descriptor.slot = "search_results_entry_label";
             descriptor.className = "search_results_entry_label";
-            descriptor.innerHTML = artists[i].name;
-
-            let element = database.getElement("search-results-entry");
-            let celement = new CustomElement(element.name, <Array<Element>>element.getContent());
-            celement.populateSlots([image, descriptor, document.createElement("span")]);
-            
-            let imagepayload : ActionPayload = {
-                "type": ActionType.PLAY,
-                "contexttype": "artist",
-                "uri": artists[i].uri
-            };
-
-            let textpayload : ActionPayload = {
-                "type": ActionType.INTENT,
-                "contexttype": "artist",
-                "uri": artists[i].uri
-            };
-
-            let sentry = new SearchResultsEntry(Category.ARTISTS, celement, image, descriptor, imagepayload, textpayload);
-            cat.addEntry(sentry);
-            sentry = null;
-            delete {celement}.celement;
-        }
-        let catt = new SearchResultsCategory(Category.ALBUMS, albumscategory.element, albumscategory.header, albums.next);
-        for (var i = 0; i < albums.length; i++) {
-            let imagepayload : ActionPayload = {
-                "type": ActionType.PLAY,
-                "contexttype": "album",
-                "uri": albums[i].uri
-            };
-
-            let textpayload : ActionPayload = {
-                "type": ActionType.INTENT,
-                "contexttype": "album",
-                "uri": albums[i].uri,
-                id: albums[i].id
-            };
-
-            let image = document.createElement("img");
-            image.slot = "search_results_entry_image";
-            image.className = "search_results_entry_image";
-            image.src = "assets/images/ic_album_white_48px.svg";
-            if (artists[i].images.length > 0) {
-                image.src = albums[i].images[0].url;
-            }
-            image.addEventListener('click', function() {console.log("DDD");}.bind(imagepayload));
-
-            let descriptor = document.createElement("span");
-            descriptor.slot = "search_results_entry_label";
-            descriptor.className = "search_results_entry_label";
-            descriptor.innerHTML = albums[i].name;
-            descriptor.addEventListener("click", function() {console.log("HALLO")}.bind(textpayload));
+            descriptor.innerHTML = entry.maintext;
+            descriptor.title = entry.maintext;
+            //@ts-ignore
+            $clamp(descriptor, {clamp: 1, useNativeClamp: true});
 
             let element = database.getElement("search-results-entry");
             let celement = new CustomElement(element.name, <Array<Element>>element.getContent());
             celement.populateSlots([image, descriptor, document.createElement("span")]);
 
-            let sentry = new SearchResultsEntry(Category.ALBUMS, celement, image, descriptor, imagepayload, textpayload);
-            catt.addEntry(sentry);
+            let sentry = new SearchResultsEntry(Category.TRACKS, celement, image, descriptor, entry.imagepayload, entry.maintextpayload);
+            category.addEntry(sentry);
             sentry = null;
             delete {celement}.celement;
         }
-        currentresults.addCategory(cat);
-        currentresults.addCategory(catt);
+        currentresults.addCategory(category);
     }
+    currentresults.attach();
 }
 
 function buildCategory(htxt : string) : Object {
@@ -236,63 +199,13 @@ function buildCategory(htxt : string) : Object {
     return {element : celement, header : header};
 }
 
-function buildTracksPlaylistsSearchResult(result : SpotifyApiRequestResult) {
-    if (result.status = RequestStatus.RESOLVED) {
-        let tracks = result.result.tracks.items;
-        let playlists = result.result.playlists.items;
-        let trackscategory = buildCategory("Tracks");
-        let playlistscategory = buildCategory("Playlists");
-        var category1 = new SearchResultsCategory(Category.TRACKS, trackscategory.element, trackscategory.header, tracks.next);
-        for (var i = 0; i < tracks.length; i++) {
-            let image = document.createElement("img");
-            image.slot = "search_results_entry_image";
-            image.className = "search_results_entry_image";
-            image.src = "assets/images/ic_album_white_48px.svg";
-            if (tracks[i].album.images.length > 0) {
-                image.src = tracks[i].album.images[0].url;
-            }
-
-            let descriptor = document.createElement("span");
-            descriptor.slot = "search_results_entry_label";
-            descriptor.className = "search_results_entry_label";
-            descriptor.innerHTML = tracks[i].name;
-
-            let element = database.getElement("search-results-entry");
-            let celement = new CustomElement(element.name, <Array<Element>>element.getContent());
-            celement.populateSlots([image, descriptor, document.createElement("span")]);
-            
-            let imagepayload : ActionPayload = {
-                "type": ActionType.PLAY,
-                "contexttype": "track",
-                "uri": tracks[i].uri
-            };
-
-            let textpayload : ActionPayload = {
-                "type": ActionType.INTENT,
-                "contexttype": "track",
-                "uri": tracks[i].uri,
-            };
-
-            let sentry = new SearchResultsEntry(Category.TRACKS, celement, image, descriptor, imagepayload, textpayload);
-            category1.addEntry(sentry);
-            sentry = null;
-            delete {celement}.celement;
-        }
-        currentresults.addCategory(category1);
-        currentresults.attach();
-    }
-}
-
-function attachEventListeners(a : HTMLDivElement) {
-    let children = a.children;
-    let cats = children[1].children;
-    for (var i = 0; i < currentresults.categories.length; i++) {
+function attachEventListeners(a : SearchResults) {
+    let cats = a.categories;
+    for (var i = 0; i < cats.length; i++) {
         let currentcategory = cats[i];
-        let entries = currentcategory.getElementsByClassName("search_results_category_entries")[0].children;
-        for (var j = 0; j < entries.length; j++) {
-            let entrydata = currentresults.categories[i].entries[j];
-            let entry = entries[j];
-            entry.getElementsByClassName("search_results_entry_image")[0].addEventListener("click", function() {
+        for (var j = 0; j < currentcategory.entries.length; j++) {
+            let entry = currentcategory.entries[j];
+            entry.domtargets.image.addEventListener("click", function() {
                 if (this.contexttype == "album" || this.contexttype == "artist") {
                     let req = new SpotifyApiPlayRequest(true, this.uri, 0, []);
                     req.execute((e) => {});
@@ -300,13 +213,124 @@ function attachEventListeners(a : HTMLDivElement) {
                     let req = new SpotifyApiPlayRequest(false, null, null, [this.uri]);
                     req.execute((e) => {});
                 }
-            }.bind(entrydata.textactionpayload));
-            entry.getElementsByClassName("search_results_entry_descriptor")[0].addEventListener("click", function() {
+            }.bind(entry.textactionpayload));
+            entry.domtargets.maintext.addEventListener("click", function() {
                 if (this.contexttype == "album") {
                     displayAlbum(this.id);
                 }
-            }.bind(entrydata.textactionpayload));
+            }.bind(entry.textactionpayload));
         }
+    }
+}
+
+function buildQueryResults(result : SpotifyApiRequestResult) {
+    if (result.status === RequestStatus.RESOLVED) {
+        var artists = result.result.artists.items;
+        var albums = result.result.albums.items;
+        var tracks = result.result.tracks.items;
+        var playlists = result.result.playlists.items;
+        var artistsarray : SearchresultsObject = {};
+        artistsarray.items = [];
+        artistsarray.type = Category.ARTISTS;
+        for (var i = 0; i < artists.length; i++) {
+            let current = artists[i];
+            let o : SearchresultsEntryObject = {};
+            if (current.images) {
+                if (current.images.length > 0) {
+                    o.image = current.images[0].url;
+                }
+            }
+            o.maintext = current.name;
+            o.imagepayload = null;
+            o.maintextpayload = null;
+            artistsarray.items.push(o);
+        }
+        var albumsarray : SearchresultsObject = {};
+        albumsarray.items = [];
+        albumsarray.type = Category.ALBUMS;
+        for (var i = 0; i < albums.length; i++) {
+            let current = albums[i];
+            let o : SearchresultsEntryObject = {};
+            if (current.images) {
+                if (current.images.length > 0) {
+                    o.image = current.images[0].url;
+                }
+            }
+            o.maintext = current.name;
+            o.subtext = current.artists[0].name;
+            let imagepayload : ActionPayload = {
+                "type": ActionType.PLAY,
+                "contexttype": "album",
+                "uri": current.uri
+            };
+
+            let textpayload : ActionPayload = {
+                "type": ActionType.INTENT,
+                "contexttype": "album",
+                "uri": current.uri,
+                id: current.id
+            };
+
+            o.imagepayload = imagepayload;
+            o.maintextpayload = textpayload;
+            o.subtextpayload = textpayload;
+            
+            albumsarray.items.push(o);
+        }
+        var tracksarray : SearchresultsObject = {};
+        tracksarray.items = [];
+        tracksarray.type = Category.TRACKS;
+        for (var i = 0; i < tracks.length; i++) {
+            let current = tracks[i];
+            let o : SearchresultsEntryObject = {};
+            if (current.album.images) {
+                if (current.album.images.length > 0) {
+                    o.image = current.album.images[0].url;
+                }
+            }
+            o.maintext = current.name;
+            o.subtext = current.album.name;
+
+            let imagepayload : ActionPayload = {
+                "type": ActionType.PLAY,
+                "contexttype": "track",
+                "uri": current.uri
+            };
+
+            let textpayload : ActionPayload = {
+                "type": ActionType.INTENT,
+                "contexttype": "track",
+                "uri": current.uri,
+                id: current.id
+            };
+
+            o.imagepayload = imagepayload;
+            o.maintextpayload = textpayload;
+            o.subtextpayload = null;
+
+            tracksarray.items.push(o);
+        }
+        var playlistsarray : SearchresultsObject = {};
+        playlistsarray.items = [];
+        playlistsarray.type = Category.PLAYLISTS;
+        for (var i = 0; i < playlists.length; i++) {
+            let current = playlists[i];
+            let o : SearchresultsEntryObject = {};
+            if (current.images) {
+                if (current.images.length > 0) {
+                    o.image = current.images[0].url;
+                }
+            }
+            o.maintext = current.name;
+            o.subtext = current.owner.display_name;
+
+            o.imagepayload = null
+            o.maintextpayload = null;
+            o.subtextpayload = null;
+
+            playlistsarray.items.push(o);
+        }
+        buildSearchResults([artistsarray, albumsarray, tracksarray, playlistsarray]);
     }
 }
 
@@ -319,12 +343,9 @@ function search(query : string) {
         return;
     }
     let qsplit = query.split(" ");
-    let request = new SpotifyApiSearchRequest(true, true, false, false, 4);
+    let request = new SpotifyApiSearchRequest(true, true, true, true, 6);
     request.buildGeneralQuery(qsplit);
-    request.execute(buildArtistAlbumSearchResult);
-    let request2 = new SpotifyApiSearchRequest(false, false, true, true, 10);
-    request2.buildGeneralQuery(qsplit);
-    request2.execute(buildTracksPlaylistsSearchResult);
+    request.execute(buildQueryResults);
     currentresults = new SearchResults(true, true, true, true, query);
     currentresults.create();
 }

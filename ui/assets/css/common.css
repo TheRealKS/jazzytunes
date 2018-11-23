@@ -115,7 +115,6 @@ body {
     color: #EEEEEE;
 }
 
-
 .credentials {
     position: absolute;
     bottom: 0;
@@ -201,7 +200,7 @@ body {
     margin-left: 1vw;
     color: lightgray;
     cursor: pointer;
-}   
+}
 
 #user_name {
     color: lightgray;
@@ -209,11 +208,11 @@ body {
 }
 
 .navbar {
-    width: 80vw;
+    width: calc(100% + 0.4vw);
     max-height: 10vh;
     background-color: #69625d;
-    margin-left: -0.4vw;
     display: flex;
+    margin-left: -0.4vw;
     align-content: center;
     justify-content: space-between;
 }
@@ -249,14 +248,19 @@ body {
 }
 
 @-webkit-keyframes spin {
-    from { -webkit-transform: rotate(0deg); }
-    to { -webkit-transform: rotate(360deg); }
-}
-@keyframes spin {
     from {
-        transform:rotate(0deg);
+        -webkit-transform: rotate(0deg);
     }
     to {
-        transform:rotate(360deg);
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
     }
 }

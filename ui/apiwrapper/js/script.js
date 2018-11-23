@@ -232,6 +232,7 @@ class SeekBar {
 }
 class PlaybackController {
     constructor(sidebarEntry) {
+        this.repeat = Repeat.NO_REPEAT;
         this.sidebarentry = sidebarEntry;
         this.imgholder = this.sidebarentry.getElementsByClassName("cover_img")[0];
         this.titleholder = this.sidebarentry.getElementsByClassName("title")[0];
@@ -276,12 +277,12 @@ class PlaybackController {
         this.seekbar.seekToValue(0, 0);
     }
     play() {
-        this.controls.children[2].children[0].innerHTML = "play_arrow";
+        this.controls.children[2].children[0].innerHTML = "pause";
         this.seekbar.toggleTimer(true);
         player.togglePlay();
     }
     pause() {
-        this.controls.children[2].children[0].innerHTML = "pause";
+        this.controls.children[2].children[0].innerHTML = "play_arrow";
         this.seekbar.toggleTimer(false);
         player.pause();
     }
