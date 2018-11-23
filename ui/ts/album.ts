@@ -216,18 +216,18 @@ function displayAlbum(id : string) {
 
 function hover(ev : Event) {
     let t = <any>ev.target;
-    if (t) {
-        t.children[1].classList.add("front");
+    t.children[1].classList.add("front");
+    if (t.children[0].style) {
         t.children[0].style.display = "inline-block";
     }
 }
 
 function unhover(ev : Event){
     let t = <any>ev.target;
-    if (t) {
+    if (t.children[0].style) {
         t.children[0].style.display = "none";
-        t.children[1].classList.remove("front");
     }
+    t.children[1].classList.remove("front");
 }
 
 /**

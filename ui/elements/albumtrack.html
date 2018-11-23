@@ -1,6 +1,28 @@
 !###!albumtrack!###!critical
 <template id="albumtrack">
     <style>
+        .trackdetail.front {
+            margin-right: auto;
+        }
+
+        .play {
+            margin-right: 1vh;
+            display: none;
+        }
+
+        .albumtrack {
+            font-size: 1.2em;
+            border-top: 1px #c2c3c6 solid;
+            padding: 5px;
+            padding-bottom: 1vh;
+            display: flex;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .albumtrack:hover {
+            background-color: #69625d;
+        }
     </style>
     <div id="begincontent"></div>
     <i class="material-icons play">play_arrow</i>

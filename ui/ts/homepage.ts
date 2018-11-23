@@ -128,7 +128,7 @@ function initHome() {
 
     homepage.domTarget =document.getElementById("content").appendChild(homepage.holder);
 
-    let recentlyplayed = new SpotifyApiRecentTracksRequest(5);
+    let recentlyplayed = new SpotifyApiRecentTracksRequest(15);
     recentlyplayed.execute(createRecentTracksList);
 }
 
@@ -136,14 +136,9 @@ function createRecentTracksList(result : SpotifyApiRequestResult) {
     var index = 0;
     console.log(result.result);
     homepage.entries[0].clear();
-    for (var item of result.result.items) {
-        let track = item.track;
-        let imageuri = track.album.images[0].url;
-        let payload = {
-            type: ActionType.PLAY,
-            uri: track.uri
-        };
-        let element = new HomePageInteractiveEntry(imageuri, track.name, playHomePageTrack, payload, false);
+    let res = buildEntries(result.result.items);
+    for (var item of res) {
+        let element = new HomePageInteractiveEntry(item.image, item.name, playHomePageTrack, item.payload, false);
         homepage.entries[0].add(element);
     }
 }
@@ -163,6 +158,55 @@ function getHomepageHeaderText() : string {
 }
 
 function playHomePageTrack() {
-    let req = new SpotifyApiPlayRequest(false, null, null, [this.uri]);
-    req.execute((e) => {});
+    if (this.contexttype === "album") {
+        let req = new SpotifyApiPlayRequest(true, this.uri, this.contextparams.offset-1, null);
+        req.execute((e) => {});
+    }
+}
+
+interface HomepageEntryObject {
+    name : string,
+    uri : string,
+    image : string,
+    type : string,
+    payload : ActionPayload
+}
+
+function buildEntries(raw : Array<Object>) : Array<HomepageEntryObject> {
+    let arr : Array<HomepageEntryObject> = [];
+    for (var i = 0; i < raw.length; i++) {
+        let c = raw[i];
+        let fail = false;
+        for (var j = 0; j < arr.length; j++) {
+            if (c.context) {
+                if (arr[j].uri === c.context.uri) {
+                    fail = true;
+                    break;
+                }
+            } else {
+                fail = true;
+            }
+        }
+        if (!fail) {
+            let payload : ActionPayload = {
+                type: ActionType.PLAY,
+                uri: c.context.uri,
+                contexttype: c.context.type
+            };
+            if (c.context.type == "album") {
+                payload.contextparams = {
+                    offset: c.track.track_number
+                };
+            }
+            let o : HomepageEntryObject = {
+                name : c.track.name,
+                uri : c.context.uri,
+                image : c.track.album.images[0].url,
+                type : c.context.type,
+                payload: payload
+            };
+            arr.push(o);
+        }
+    }
+    return arr;
 }

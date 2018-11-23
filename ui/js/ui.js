@@ -157,17 +157,17 @@ function displayAlbum(id) {
 }
 function hover(ev) {
     let t = ev.target;
-    if (t) {
-        t.children[1].classList.add("front");
+    t.children[1].classList.add("front");
+    if (t.children[0].style) {
         t.children[0].style.display = "inline-block";
     }
 }
 function unhover(ev) {
     let t = ev.target;
-    if (t) {
+    if (t.children[0].style) {
         t.children[0].style.display = "none";
-        t.children[1].classList.remove("front");
     }
+    t.children[1].classList.remove("front");
 }
 /**
  * To convert from a data in American (bad) format to good format
@@ -284,21 +284,16 @@ function initHome() {
     homepage = new HomePage(homepageheader);
     homepage.addEntry('Your recently played tracks:', [loader]);
     homepage.domTarget = document.getElementById("content").appendChild(homepage.holder);
-    let recentlyplayed = new SpotifyApiRecentTracksRequest(5);
+    let recentlyplayed = new SpotifyApiRecentTracksRequest(15);
     recentlyplayed.execute(createRecentTracksList);
 }
 function createRecentTracksList(result) {
     var index = 0;
     console.log(result.result);
     homepage.entries[0].clear();
-    for (var item of result.result.items) {
-        let track = item.track;
-        let imageuri = track.album.images[0].url;
-        let payload = {
-            type: ActionType.PLAY,
-            uri: track.uri
-        };
-        let element = new HomePageInteractiveEntry(imageuri, track.name, playHomePageTrack, payload, false);
+    let res = buildEntries(result.result.items);
+    for (var item of res) {
+        let element = new HomePageInteractiveEntry(item.image, item.name, playHomePageTrack, item.payload, false);
         homepage.entries[0].add(element);
     }
 }
@@ -319,8 +314,49 @@ function getHomepageHeaderText() {
     }
 }
 function playHomePageTrack() {
-    let req = new SpotifyApiPlayRequest(false, null, null, [this.uri]);
-    req.execute((e) => { });
+    if (this.contexttype === "album") {
+        let req = new SpotifyApiPlayRequest(true, this.uri, this.contextparams.offset - 1, null);
+        req.execute((e) => { });
+    }
+}
+function buildEntries(raw) {
+    let arr = [];
+    for (var i = 0; i < raw.length; i++) {
+        let c = raw[i];
+        let fail = false;
+        for (var j = 0; j < arr.length; j++) {
+            if (c.context) {
+                if (arr[j].uri === c.context.uri) {
+                    fail = true;
+                    break;
+                }
+            }
+            else {
+                fail = true;
+            }
+        }
+        if (!fail) {
+            let payload = {
+                type: ActionType.PLAY,
+                uri: c.context.uri,
+                contexttype: c.context.type
+            };
+            if (c.context.type == "album") {
+                payload.contextparams = {
+                    offset: c.track.track_number
+                };
+            }
+            let o = {
+                name: c.track.name,
+                uri: c.context.uri,
+                image: c.track.album.images[0].url,
+                type: c.context.type,
+                payload: payload
+            };
+            arr.push(o);
+        }
+    }
+    return arr;
 }
 //// <reference path="../apiwrapper/ts/spotifyapirequest.ts" />
 var queryrunning;

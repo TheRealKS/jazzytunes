@@ -88,6 +88,14 @@ declare function initHome(): void;
 declare function createRecentTracksList(result: SpotifyApiRequestResult): void;
 declare function getHomepageHeaderText(): string;
 declare function playHomePageTrack(): void;
+interface HomepageEntryObject {
+    name: string;
+    uri: string;
+    image: string;
+    type: string;
+    payload: ActionPayload;
+}
+declare function buildEntries(raw: Array<Object>): Array<HomepageEntryObject>;
 declare var queryrunning: NodeJS.Timer;
 declare enum Category {
     ALBUMS = 0,

@@ -1,6 +1,39 @@
 #!!!#albumheader!!!#critical
 <template id="albumheader">
     <style>
+        .albumheader {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px gray solid;
+            padding-bottom: 1.5vh;
+            padding-left: 1.5vh;
+        }
+
+        .albumtextinfo {
+            display: flex;
+            flex-direction: column;
+            color: white;
+        }
+
+        .albumcover {
+            width: 15vw;
+            min-height: 15vw;
+            justify-self: flex-start;
+            margin-right: 1.5vh;
+            box-shadow: 1px 1px 1px 1px #212121;
+        }
+
+        .maintext {
+            font-size: 3em;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+        }
+
+        .subtext_al {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: c9cdd3;
+        }
     </style>
     <div id="begincontent"></div>
     <slot class="albumcover" slot="albumcover" src="assets/images/ic_album_white_48px.svg"></slot>
