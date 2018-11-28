@@ -133,6 +133,13 @@ function replaceDomContent(newhtml : any, addEntry : boolean) {
     return contentdom.appendChild(newhtml);
 }
 
+function clearDomContent() {
+    while (contentdom.firstElementChild != contentdom.lastElementChild) {
+        contentdom.removeChild(contentdom.lastElementChild);
+    }
+    return contentdom;
+}
+
 /**
  * Generates a unique id for navigation entries
  */

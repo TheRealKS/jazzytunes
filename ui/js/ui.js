@@ -288,12 +288,13 @@ function initHome() {
     let loader = new HomePageInteractiveEntry('assets/images/album_spin.svg', 'Loading...', () => { }, null, true);
     homepage = new HomePage(homepageheader);
     homepage.addEntry('Your recently played tracks:', [loader]);
-    homepage.domTarget = document.getElementById("content").appendChild(homepage.holder);
+    displayLoader();
     let recentlyplayed = new SpotifyApiRecentTracksRequest(15);
     recentlyplayed.execute(createRecentTracksList);
 }
 function createRecentTracksList(result) {
     var index = 0;
+    homepage.domTarget = clearDomContent().appendChild(homepage.holder);
     console.log(result.result);
     homepage.entries[0].clear();
     let res = buildEntries(result.result.items);
@@ -483,6 +484,12 @@ function replaceDomContent(newhtml, addEntry) {
         contentdom.removeChild(contentdom.lastElementChild);
     }
     return contentdom.appendChild(newhtml);
+}
+function clearDomContent() {
+    while (contentdom.firstElementChild != contentdom.lastElementChild) {
+        contentdom.removeChild(contentdom.lastElementChild);
+    }
+    return contentdom;
 }
 /**
  * Generates a unique id for navigation entries

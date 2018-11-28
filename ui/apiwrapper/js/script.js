@@ -154,7 +154,7 @@ function createProfile(result) {
     }
 }
 if (electron.remote.process.argv[0] !== "debug") {
-    //addLoadEvent(startAuthProcess);
+    addLoadEvent(startAuthProcess);
 }
 ////<reference path="../../ts/ui_common.ts" /> 
 //import '@typings/spotify-web-playback-sdk';

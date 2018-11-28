@@ -131,7 +131,7 @@ function initHome() {
     homepage = new HomePage(homepageheader);
     homepage.addEntry('Your recently played tracks:', [loader]);
 
-    homepage.domTarget =document.getElementById("content").appendChild(homepage.holder);
+    displayLoader();
 
     let recentlyplayed = new SpotifyApiRecentTracksRequest(15);
     recentlyplayed.execute(createRecentTracksList);
@@ -139,6 +139,7 @@ function initHome() {
 
 function createRecentTracksList(result : SpotifyApiRequestResult) {
     var index = 0;
+    homepage.domTarget = clearDomContent().appendChild(homepage.holder);
     console.log(result.result);
     homepage.entries[0].clear();
     let res = buildEntries(result.result.items);

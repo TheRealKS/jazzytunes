@@ -190,5 +190,5 @@ function createProfile(result : SpotifyApiRequestResult) {
 }
 
 if (electron.remote.process.argv[0] !== "debug") {
-    //addLoadEvent(startAuthProcess);
+    addLoadEvent(startAuthProcess);
 }
