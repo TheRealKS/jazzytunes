@@ -1,5 +1,6 @@
 ////<reference path="../../ts/homepage.ts" /> 
 const electron = require('electron');
+const electronOauth2 = require('electron-oauth2');
 const remote = electron.remote;
 const BrowserWindow = remote.BrowserWindow;
 const OPERATIONMODE = "production";
@@ -82,11 +83,13 @@ function startAuthProcess() {
     authWindow.loadURL(url);
     authWindow.show();
     var webContents = authWindow.webContents;
-    webContents.on('will-navigate', (event, url) => {
-        handleAuthCodeCallback(url);
-    });
-    webContents.on('did-get-redirect-request', (event, oldURL, newURL) => {
-        handleAuthCodeCallback(newURL);
+    var session = webContents.session.webRequest;
+    session.onBeforeRedirect(['*://*./*'], function (details, callback) {
+        if (details.redirectURL) {
+            if (details.redirectURL.indexOf("index.html") > -1) {
+                handleAuthCodeCallback(details.redirectURL);
+            }
+        }
     });
 }
 function handleAuthCodeCallback(url) {
@@ -151,13 +154,7 @@ function createProfile(result) {
     }
 }
 if (electron.remote.process.argv[0] !== "debug") {
-    addLoadEvent(startAuthProcess);
-}
-var contentdom;
-function initContent() {
-    contentdom = document.getElementById("content");
-}
-function clearContent() {
+    //addLoadEvent(startAuthProcess);
 }
 ////<reference path="../../ts/ui_common.ts" /> 
 //import '@typings/spotify-web-playback-sdk';
