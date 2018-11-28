@@ -55,11 +55,7 @@ class SearchResults {
 
     attach() {
         this.finalise();
-        let content = document.getElementById("content");
-        while (content.firstElementChild != content.lastElementChild) {
-            content.removeChild(content.lastElementChild);
-        }
-        let a = content.appendChild(this.element);
+        replaceDomContent(this.element, true);
         attachEventListeners(this);
     }
 
@@ -166,7 +162,7 @@ function buildSearchResults(items : Array<SearchresultsObject>) {
                 image.src = entry.image;
             }
 
-            let descriptor = document.createElement("span");
+            let descriptor = document.createElement("div");
             descriptor.slot = "search_results_entry_label";
             descriptor.className = "search_results_entry_label";
             descriptor.innerHTML = entry.maintext;
@@ -174,11 +170,22 @@ function buildSearchResults(items : Array<SearchresultsObject>) {
             //@ts-ignore
             $clamp(descriptor, {clamp: 1, useNativeClamp: true});
 
+            let subtext = document.createElement("div");
+            subtext.slot = "search_results_entry_label_sub";
+            subtext.className = "search_results_entry_label";
+            subtext.classList.add("sub");
+            if (entry.subtext) {
+                subtext.innerHTML = entry.subtext;
+                subtext.title = entry.subtext;
+            }
+            //@ts-ignore
+            $clamp(subtext, {clamp: 1, useNativeClamp: true});
+
             let element = database.getElement("search-results-entry");
             let celement = new CustomElement(element.name, <Array<Element>>element.getContent());
-            celement.populateSlots([image, descriptor, document.createElement("span")]);
+            celement.populateSlots([image, descriptor, subtext]);
 
-            let sentry = new SearchResultsEntry(Category.TRACKS, celement, image, descriptor, entry.imagepayload, entry.maintextpayload);
+            let sentry = new SearchResultsEntry(item.type, celement, image, descriptor, entry.imagepayload, entry.maintextpayload);
             category.addEntry(sentry);
             sentry = null;
             delete {celement}.celement;
@@ -217,6 +224,8 @@ function attachEventListeners(a : SearchResults) {
             entry.domtargets.maintext.addEventListener("click", function() {
                 if (this.contexttype == "album") {
                     displayAlbum(this.id);
+                } else if (this.contexttype == "track") {
+                    //Open album
                 }
             }.bind(entry.textactionpayload));
         }
@@ -240,7 +249,10 @@ function buildQueryResults(result : SpotifyApiRequestResult) {
                     o.image = current.images[0].url;
                 }
             }
+
+            let followers = current.followers.total;
             o.maintext = current.name;
+            o.subtext = formatNumberString(followers.toString()) + " follower" + correctSsuffix(followers);
             o.imagepayload = null;
             o.maintextpayload = null;
             artistsarray.items.push(o);
@@ -289,7 +301,7 @@ function buildQueryResults(result : SpotifyApiRequestResult) {
                 }
             }
             o.maintext = current.name;
-            o.subtext = current.album.name;
+            o.subtext = current.album.artists[0].name + " - " + current.album.name;
 
             let imagepayload : ActionPayload = {
                 "type": ActionType.PLAY,
@@ -299,7 +311,7 @@ function buildQueryResults(result : SpotifyApiRequestResult) {
 
             let textpayload : ActionPayload = {
                 "type": ActionType.INTENT,
-                "contexttype": "track",
+                "contexttype": "track", 
                 "uri": current.uri,
                 id: current.id
             };
@@ -322,7 +334,7 @@ function buildQueryResults(result : SpotifyApiRequestResult) {
                 }
             }
             o.maintext = current.name;
-            o.subtext = current.owner.display_name;
+            o.subtext = "By: " + current.owner.display_name;
 
             o.imagepayload = null
             o.maintextpayload = null;
@@ -348,6 +360,10 @@ function search(query : string) {
     request.execute(buildQueryResults);
     currentresults = new SearchResults(true, true, true, true, query);
     currentresults.create();
+}
+
+function formatNumberString(str : string) : string {
+    return str.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 addLoadEvent(() => {

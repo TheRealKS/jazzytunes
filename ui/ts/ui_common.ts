@@ -2,11 +2,6 @@
 //// <reference path="../apiwrapper/ts/spotifyapirequest.ts" />
 //import {Spinner, SpinnerOptions} from '../../node_modules/spin.js/spin';
 
-enum ActionType {
-    PLAY,
-    INTENT
-}
-
 interface ContextParmaters {
     offset: number
 }
@@ -20,6 +15,8 @@ interface ActionPayload {
 }
 
 var volumecontrolopen = false;
+
+var loader : HTMLElement;
 
 function createSidebarEntry(name: string) {
     let header = document.createElement("sidebar_element_header");
@@ -132,14 +129,30 @@ function setVolume(amount? : number) {
     player.setVolume(newvol);
 }
 
-function testSearch() {
-    let request = new SpotifyApiSearchRequest(true, true, true, true, 10);
-    request.buildGeneralQuery(["fefe", "nicki"], false);
-    request.execute((result) => {
-        console.log(result);
-    });
+/**
+ * To get the correct plural suffix for a word
+ * @param quantity quantity of objects.
+ */
+function correctSsuffix(quantity : number) : string{
+    if (quantity === 1) {
+        return "";
+    }
+    return "s";
+}
+
+function displayLoader() {
+    contentdom.appendChild(loader);
+}
+
+function stringToDom(str) {
+    var parser = new DOMParser()
+    return parser.parseFromString(str, "text/html");
 }
 
 function span() {
     return document.createElement("span");
 }
+
+addLoadEvent(function() {
+    loader = <HTMLElement>stringToDom("<div id='loader' class='loader_holder'><div class='lds-facebook'><div></div><div></div><div></div></div></div>").firstChild;
+});

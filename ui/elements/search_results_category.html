@@ -15,24 +15,27 @@
             border-bottom: 1px #c9cdd3 solid;
         }
 
-        .search_results_category_more {
+        .search_results_category_more{
             width: 50%;
             text-align: right;
             border-bottom: 1px #c9cdd3 solid;
-            cursor: pointer;
         }
 
-        .search_results_category_more:hover {
-            background-color: gray;
+        .search_results_category_more span {
+            cursor :pointer;
         }
 
-        .search_results_category_more:active {
-            background-color: darkgray;
+        .search_results_category_more span:hover {
+            color: gray;
+        }
+
+        .search_results_category_more span:active {
+            color: darkgray;
         }
     </style>
     <div id="begincontent"></div>
     <div class="search_results_category">
         <slot class="search_results_category_header" name="search_results_category_header"></slot>
-        <span class="search_results_category_more">See more</span>
+        <span class="search_results_category_more"><span>See more</span></span>
     </div>
 </template>

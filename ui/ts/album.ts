@@ -50,11 +50,7 @@ class AlbumView {
             let ell = cel.getElement(null, false).children[0];
             this.createHeader();
             ell.prepend(this.header);
-            let content = document.getElementById("content");
-            while (content.firstElementChild != content.lastElementChild) {
-                content.removeChild(content.lastElementChild);
-            }
-            this.domTargetMain = content.appendChild(ell);
+            this.domTargetMain = replaceDomContent(ell, true);
             this.domTargetImages = this.domTargetMain.firstChild.firstChild;
         } else if (step === 2) {
             let holder = document.createElement("div");
@@ -121,7 +117,7 @@ class AlbumView {
         subtext.slot = "subtext";
 
         let subsubtext = span();
-        subsubtext.innerHTML = rearrangeDate(this.data.release) + this.SEPARATOR + this.data.tracks + " tracks"+ this.SEPARATOR + this.data.duration;
+        subsubtext.innerHTML = rearrangeDate(this.data.release) + this.SEPARATOR + this.data.tracks + " track" + correctSsuffix(this.data.tracks) + this.SEPARATOR + this.data.duration;
         subsubtext.className = "subsubtext";
         subsubtext.slot = "subsubtext";
 
@@ -210,11 +206,14 @@ function createAlbumView(res : SpotifyApiRequestResult) {
 
 
 function displayAlbum(id : string) {
+    replaceDomContent(document.createElement("div"), false);
+    displayLoader();
     let req = new SpotiyApiAlbumRequest(id, []);
     req.execute(createAlbumView);
 }
 
 function hover(ev : Event) {
+    return;
     let t = <any>ev.target;
     t.children[1].classList.add("front");
     if (t.children[0].style) {
@@ -223,6 +222,7 @@ function hover(ev : Event) {
 }
 
 function unhover(ev : Event){
+    return;
     let t = <any>ev.target;
     if (t.children[0].style) {
         t.children[0].style.display = "none";

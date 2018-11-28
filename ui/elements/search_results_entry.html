@@ -11,12 +11,6 @@
             max-height: 12%;
         }
 
-        .search_results_entry_description {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
         .search_results_entry_image {
             height: 80%;
             margin-right: 0.4vw;
@@ -25,6 +19,8 @@
         
         .search_results_entry_label {
             cursor: pointer;
+            float: left;
+            clear: left;
         }
 
         .search_results_entry_label:hover {
@@ -36,15 +32,16 @@
         }
 
         .sub {
-            font-size: 1em;
+            font-size: 0.8em;
+            color: #c9cdd3;
         }
     </style>
     <div id="begincontent"></div>
     <div class="search_results_entry">
-        <slot name="search_results_entry_image" class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg"></slot>
+        <slot slot="search_results_entry_image" class="search_results_entry_image" src="assets/images/ic_album_white_48px.svg"></slot>
         <div class="search_results_entry_description">
-            <slot name="search_results_entry_label" class="search_results_entry_label"></slot>
-            <slot name="search_results_entry_label_sub" class="search_results_entry_label sub"></slot>
+            <slot slot="search_results_entry_label" class="search_results_entry_label"></slot>
+            <slot slot="search_results_entry_label_sub" class="search_results_entry_label sub"></slot>
         </div>
     </div>
 </template>

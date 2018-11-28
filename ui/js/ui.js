@@ -15,11 +15,7 @@ class AlbumView {
             let ell = cel.getElement(null, false).children[0];
             this.createHeader();
             ell.prepend(this.header);
-            let content = document.getElementById("content");
-            while (content.firstElementChild != content.lastElementChild) {
-                content.removeChild(content.lastElementChild);
-            }
-            this.domTargetMain = content.appendChild(ell);
+            this.domTargetMain = replaceDomContent(ell, true);
             this.domTargetImages = this.domTargetMain.firstChild.firstChild;
         }
         else if (step === 2) {
@@ -81,7 +77,7 @@ class AlbumView {
         subtext.className = "subtext_al";
         subtext.slot = "subtext";
         let subsubtext = span();
-        subsubtext.innerHTML = rearrangeDate(this.data.release) + this.SEPARATOR + this.data.tracks + " tracks" + this.SEPARATOR + this.data.duration;
+        subsubtext.innerHTML = rearrangeDate(this.data.release) + this.SEPARATOR + this.data.tracks + " track" + correctSsuffix(this.data.tracks) + this.SEPARATOR + this.data.duration;
         subsubtext.className = "subsubtext";
         subsubtext.slot = "subsubtext";
         let slots = [cover, type, albumname, subtext, subsubtext];
@@ -152,10 +148,13 @@ function createAlbumView(res) {
     }
 }
 function displayAlbum(id) {
+    replaceDomContent(document.createElement("div"), false);
+    displayLoader();
     let req = new SpotiyApiAlbumRequest(id, []);
     req.execute(createAlbumView);
 }
 function hover(ev) {
+    return;
     let t = ev.target;
     t.children[1].classList.add("front");
     if (t.children[0].style) {
@@ -163,6 +162,7 @@ function hover(ev) {
     }
 }
 function unhover(ev) {
+    return;
     let t = ev.target;
     if (t.children[0].style) {
         t.children[0].style.display = "none";
@@ -198,6 +198,11 @@ function capitalizeFirstLetter(s) {
 /// <reference path="../elements/elements.d.ts" />
 /// <reference path="../apiwrapper/js/script.d.ts" />
 var homepage;
+var ActionType;
+(function (ActionType) {
+    ActionType[ActionType["PLAY"] = 0] = "PLAY";
+    ActionType[ActionType["INTENT"] = 1] = "INTENT";
+})(ActionType || (ActionType = {}));
 class HomePage {
     constructor(header) {
         this.entries = [];
@@ -296,6 +301,10 @@ function createRecentTracksList(result) {
         let element = new HomePageInteractiveEntry(item.image, item.name, playHomePageTrack, item.payload, false);
         homepage.entries[0].add(element);
     }
+    let entry = new NavigationEntry();
+    entry.id = generateID();
+    entry.htmlContent = homepage.domTarget;
+    navhistory.addState(NavigationPosition.BACK, entry);
 }
 function getHomepageHeaderText() {
     let date = new Date();
@@ -336,28 +345,158 @@ function buildEntries(raw) {
             }
         }
         if (!fail) {
-            let payload = {
-                type: ActionType.PLAY,
-                uri: c.context.uri,
-                contexttype: c.context.type
-            };
-            if (c.context.type == "album") {
-                payload.contextparams = {
-                    offset: c.track.track_number
+            if (c.context) {
+                let payload = {
+                    type: ActionType.PLAY,
+                    uri: c.context.uri,
+                    contexttype: c.context.type
                 };
+                if (c.context.type == "album") {
+                    payload.contextparams = {
+                        offset: c.track.track_number
+                    };
+                }
+                let o = {
+                    name: c.track.name,
+                    uri: c.context.uri,
+                    image: c.track.album.images[0].url,
+                    type: c.context.type,
+                    payload: payload
+                };
+                arr.push(o);
             }
-            let o = {
-                name: c.track.name,
-                uri: c.context.uri,
-                image: c.track.album.images[0].url,
-                type: c.context.type,
-                payload: payload
-            };
-            arr.push(o);
         }
     }
     return arr;
 }
+var navhistory;
+var backbutton;
+var forwardbutton;
+var contentdom;
+var currentposition = -1;
+var NavigationPosition;
+(function (NavigationPosition) {
+    NavigationPosition[NavigationPosition["BACK"] = 0] = "BACK";
+    NavigationPosition[NavigationPosition["FRONT"] = 1] = "FRONT";
+})(NavigationPosition || (NavigationPosition = {}));
+class NavigationHistory {
+    constructor() {
+        this.entries = [];
+        this.ids = [];
+    }
+    /**
+     * Adds a state to the navigation history and increments the current position
+     * @param position Whether to add the entry at the front or at the back of the history
+     * @param entry The entry to add
+     */
+    addState(position, entry) {
+        this.ids.push(entry.id);
+        if (position === NavigationPosition.BACK) {
+            this.entries.push(entry);
+        }
+        else {
+            this.entries.unshift(entry);
+        }
+        currentposition++;
+        this.collectGarbage();
+    }
+    collectGarbage() {
+        if (this.ids.length > 10) {
+            this.ids.splice(0, 10);
+            this.entries.splice(0, 10);
+        }
+    }
+    /**
+     * Returns true if navigation history has previous states for the current position
+     */
+    hasPrevious() {
+        return currentposition > 0;
+    }
+    /**
+     * Returns true if navigation hisotry has more states beyond the current position
+     */
+    hasNext() {
+        return currentposition + 1 < this.entries.length;
+    }
+    /**
+     * Gets the previous state (relative to the value of current position)
+     */
+    getPreviousState() {
+        return this.entries[currentposition - 1];
+    }
+    /**
+     * Gets the next state (relative to the value of current position)
+     */
+    getNextState() {
+        return this.entries[currentposition + 1];
+    }
+    /**
+     * Gets the state at the index of the value of current position
+     */
+    getCurrentState() {
+        return this.entries[currentposition];
+    }
+}
+class NavigationEntry {
+    /**
+     * Gets the html content for this state
+     */
+    getHTML() {
+        return this.htmlContent;
+    }
+}
+function initializeNavigation() {
+    navhistory = new NavigationHistory();
+    backbutton = document.getElementById("back");
+    forwardbutton = document.getElementById("forward");
+    backbutton.addEventListener("click", handleBack);
+    forwardbutton.addEventListener("click", handleForward);
+    contentdom = document.getElementById("content");
+}
+function handleBack() {
+    if (navhistory.hasPrevious()) {
+        currentposition--;
+        replaceDomContent(navhistory.getCurrentState().htmlContent, false);
+    }
+}
+function handleForward() {
+    if (navhistory.hasNext()) {
+        currentposition++;
+        replaceDomContent(navhistory.getCurrentState().htmlContent, false);
+    }
+}
+/**
+ * Replaces the current content of the content area of the ui.
+ * @param newhtml The content to insert instead of the old content
+ * @param addEntry Determines whether or not to add a navigation history entry for this content
+ * @returns The appended element
+ */
+function replaceDomContent(newhtml, addEntry) {
+    if (addEntry) {
+        let newid = generateID();
+        let entry = new NavigationEntry();
+        entry.htmlContent = newhtml;
+        entry.id = newid;
+        navhistory.addState(NavigationPosition.BACK, entry);
+    }
+    while (contentdom.firstElementChild != contentdom.lastElementChild) {
+        contentdom.removeChild(contentdom.lastElementChild);
+    }
+    return contentdom.appendChild(newhtml);
+}
+/**
+ * Generates a unique id for navigation entries
+ */
+function generateID() {
+    let id = "";
+    do {
+        for (var i = 0; i < 4; i++) {
+            id += Math.floor((Math.random() * 9));
+        }
+    } while (navhistory.ids.indexOf(parseInt(id)) >= 0);
+    return parseInt(id);
+}
+addLoadEvent(initializeNavigation);
 //// <reference path="../apiwrapper/ts/spotifyapirequest.ts" />
 var queryrunning;
 var Category;
@@ -396,11 +535,7 @@ class SearchResults {
     }
     attach() {
         this.finalise();
-        let content = document.getElementById("content");
-        while (content.firstElementChild != content.lastElementChild) {
-            content.removeChild(content.lastElementChild);
-        }
-        let a = content.appendChild(this.element);
+        replaceDomContent(this.element, true);
         attachEventListeners(this);
     }
     addCategory(element) {
@@ -463,17 +598,27 @@ function buildSearchResults(items) {
             if (entry.image) {
                 image.src = entry.image;
             }
-            let descriptor = document.createElement("span");
+            let descriptor = document.createElement("div");
             descriptor.slot = "search_results_entry_label";
             descriptor.className = "search_results_entry_label";
             descriptor.innerHTML = entry.maintext;
             descriptor.title = entry.maintext;
             //@ts-ignore
             $clamp(descriptor, { clamp: 1, useNativeClamp: true });
+            let subtext = document.createElement("div");
+            subtext.slot = "search_results_entry_label_sub";
+            subtext.className = "search_results_entry_label";
+            subtext.classList.add("sub");
+            if (entry.subtext) {
+                subtext.innerHTML = entry.subtext;
+                subtext.title = entry.subtext;
+            }
+            //@ts-ignore
+            $clamp(subtext, { clamp: 1, useNativeClamp: true });
             let element = database.getElement("search-results-entry");
             let celement = new CustomElement(element.name, element.getContent());
-            celement.populateSlots([image, descriptor, document.createElement("span")]);
-            let sentry = new SearchResultsEntry(Category.TRACKS, celement, image, descriptor, entry.imagepayload, entry.maintextpayload);
+            celement.populateSlots([image, descriptor, subtext]);
+            let sentry = new SearchResultsEntry(item.type, celement, image, descriptor, entry.imagepayload, entry.maintextpayload);
             category.addEntry(sentry);
             sentry = null;
             delete { celement }.celement;
@@ -511,6 +656,9 @@ function attachEventListeners(a) {
                 if (this.contexttype == "album") {
                     displayAlbum(this.id);
                 }
+                else if (this.contexttype == "track") {
+                    //Open album
+                }
             }.bind(entry.textactionpayload));
         }
     }
@@ -532,7 +680,9 @@ function buildQueryResults(result) {
                     o.image = current.images[0].url;
                 }
             }
+            let followers = current.followers.total;
             o.maintext = current.name;
+            o.subtext = formatNumberString(followers.toString()) + " follower" + correctSsuffix(followers);
             o.imagepayload = null;
             o.maintextpayload = null;
             artistsarray.items.push(o);
@@ -578,7 +728,7 @@ function buildQueryResults(result) {
                 }
             }
             o.maintext = current.name;
-            o.subtext = current.album.name;
+            o.subtext = current.album.artists[0].name + " - " + current.album.name;
             let imagepayload = {
                 "type": ActionType.PLAY,
                 "contexttype": "track",
@@ -607,7 +757,7 @@ function buildQueryResults(result) {
                 }
             }
             o.maintext = current.name;
-            o.subtext = current.owner.display_name;
+            o.subtext = "By: " + current.owner.display_name;
             o.imagepayload = null;
             o.maintextpayload = null;
             o.subtextpayload = null;
@@ -631,6 +781,9 @@ function search(query) {
     currentresults = new SearchResults(true, true, true, true, query);
     currentresults.create();
 }
+function formatNumberString(str) {
+    return str.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 addLoadEvent(() => {
     document.getElementById("searchbox").addEventListener("keyup", (ev) => {
         if (!queryrunning) {
@@ -649,12 +802,8 @@ addLoadEvent(() => {
 //// <reference path="../elements/elements.ts" /> 
 //// <reference path="../apiwrapper/ts/spotifyapirequest.ts" />
 //import {Spinner, SpinnerOptions} from '../../node_modules/spin.js/spin';
-var ActionType;
-(function (ActionType) {
-    ActionType[ActionType["PLAY"] = 0] = "PLAY";
-    ActionType[ActionType["INTENT"] = 1] = "INTENT";
-})(ActionType || (ActionType = {}));
 var volumecontrolopen = false;
+var loader;
 function createSidebarEntry(name) {
     let header = document.createElement("sidebar_element_header");
     let entryName = document.createElement("span");
@@ -757,13 +906,26 @@ function setVolume(amount) {
     }
     player.setVolume(newvol);
 }
-function testSearch() {
-    let request = new SpotifyApiSearchRequest(true, true, true, true, 10);
-    request.buildGeneralQuery(["fefe", "nicki"], false);
-    request.execute((result) => {
-        console.log(result);
-    });
+/**
+ * To get the correct plural suffix for a word
+ * @param quantity quantity of objects.
+ */
+function correctSsuffix(quantity) {
+    if (quantity === 1) {
+        return "";
+    }
+    return "s";
+}
+function displayLoader() {
+    contentdom.appendChild(loader);
+}
+function stringToDom(str) {
+    var parser = new DOMParser();
+    return parser.parseFromString(str, "text/html");
 }
 function span() {
     return document.createElement("span");
 }
+addLoadEvent(function () {
+    loader = stringToDom("<div id='loader' class='loader_holder'><div class='lds-facebook'><div></div><div></div><div></div></div></div>").firstChild;
+});

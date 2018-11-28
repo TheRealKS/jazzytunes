@@ -2,6 +2,11 @@
 /// <reference path="../apiwrapper/js/script.d.ts" />
 var homepage : HomePage;
 
+enum ActionType {
+    PLAY,
+    INTENT
+}
+
 class HomePage {
     header : HTMLSpanElement;
     entries : Array<HomePageEntry> = [];
@@ -141,6 +146,10 @@ function createRecentTracksList(result : SpotifyApiRequestResult) {
         let element = new HomePageInteractiveEntry(item.image, item.name, playHomePageTrack, item.payload, false);
         homepage.entries[0].add(element);
     }
+    let entry = new NavigationEntry();
+    entry.id = generateID();
+    entry.htmlContent = homepage.domTarget;
+    navhistory.addState(NavigationPosition.BACK, entry);
 }
 
 function getHomepageHeaderText() : string {
@@ -188,24 +197,26 @@ function buildEntries(raw : Array<Object>) : Array<HomepageEntryObject> {
             }
         }
         if (!fail) {
-            let payload : ActionPayload = {
-                type: ActionType.PLAY,
-                uri: c.context.uri,
-                contexttype: c.context.type
-            };
-            if (c.context.type == "album") {
-                payload.contextparams = {
-                    offset: c.track.track_number
+            if (c.context) {
+                let payload : ActionPayload = {
+                    type: ActionType.PLAY,
+                    uri: c.context.uri,
+                    contexttype: c.context.type
                 };
+                if (c.context.type == "album") {
+                    payload.contextparams = {
+                        offset: c.track.track_number
+                    };
+                }
+                let o : HomepageEntryObject = {
+                    name : c.track.name,
+                    uri : c.context.uri,
+                    image : c.track.album.images[0].url,
+                    type : c.context.type,
+                    payload: payload
+                };
+                arr.push(o);
             }
-            let o : HomepageEntryObject = {
-                name : c.track.name,
-                uri : c.context.uri,
-                image : c.track.album.images[0].url,
-                type : c.context.type,
-                payload: payload
-            };
-            arr.push(o);
         }
     }
     return arr;
