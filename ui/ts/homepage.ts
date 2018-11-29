@@ -149,7 +149,7 @@ function createRecentTracksList(result : SpotifyApiRequestResult) {
     }
     let entry = new NavigationEntry();
     entry.id = generateID();
-    entry.htmlContent = homepage.domTarget;
+    entry.htmlContent = homepage.domTarget; 
     navhistory.addState(NavigationPosition.BACK, entry);
 }
 

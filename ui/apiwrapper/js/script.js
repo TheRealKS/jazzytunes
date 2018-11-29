@@ -184,6 +184,7 @@ class SeekBar {
         this.currentduration = newsongduration;
         this.onepercent = Math.round(newsongduration / 100);
         this.currentposition = 0;
+        this.currenpositionseconds = 0;
         this.deleteTimer();
         this.createTimer();
     }
@@ -191,22 +192,27 @@ class SeekBar {
      * Seeks the seekbar to a value. Does not change the playing position of the player.
      * @param positionInMS The position to seek to in milliseconds
      */
-    seekToValue(positionInMS, percentage) {
+    seekToValue(positionInMS, percentage, updateLabel) {
         if (positionInMS <= this.currentduration) {
             this.currentposition = positionInMS;
             if (percentage) {
                 this.currentpercentage = percentage;
+                this.currenpositionseconds = Math.round((this.currentposition) / 1000);
             }
             else {
                 this.currentpercentage = Math.ceil(positionInMS / this.onepercent);
             }
-            playbackcontroller.setCurrentTime(secondsToTimeString(Math.round((this.currentposition / 1000))));
+            if (updateLabel) {
+                playbackcontroller.setCurrentTime(secondsToTimeString(Math.round((this.currentposition / 1000))));
+            }
             this.seekbar.value = this.currentpercentage.toString();
         }
         else {
             this.currentpercentage = 100;
             this.seekbar.value = '100';
-            playbackcontroller.setCurrentTime(playbackcontroller.timefull.innerHTML);
+            if (updateLabel) {
+                playbackcontroller.setCurrentTime(playbackcontroller.timefull.innerHTML);
+            }
             this.deleteTimer();
         }
     }
@@ -219,11 +225,20 @@ class SeekBar {
                 this.seekToValue(this.currentposition + this.onepercent);
             }
         }, this.onepercent);
+        this.secondstimer = setInterval(() => {
+            if (this.timeractivated) {
+                playbackcontroller.setCurrentTime(secondsToTimeString(++this.currenpositionseconds));
+            }
+        }, 1000);
     }
     deleteTimer() {
         if (this.currenttimer) {
             clearInterval(this.currenttimer);
             this.currenttimer = undefined;
+        }
+        if (this.secondstimer) {
+            clearInterval(this.secondstimer);
+            this.secondstimer = undefined;
         }
     }
 }
@@ -402,7 +417,7 @@ function previousTrack(ev) {
 }
 function setPosition(position) {
     player.seek(position);
-    playbackcontroller.seekbar.seekToValue(position);
+    playbackcontroller.seekbar.seekToValue(position, null, true);
 }
 function setShuffle() {
     if (playbackcontroller.shuffling) {
