@@ -1,6 +1,5 @@
 ////<reference path="../../ts/homepage.ts" /> 
 const electron = require('electron');
-const electronOauth2 = require('electron-oauth2');
 const remote = electron.remote;
 const BrowserWindow = remote.BrowserWindow;
 const OPERATIONMODE = "production";

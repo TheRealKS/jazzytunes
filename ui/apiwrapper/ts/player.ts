@@ -1,10 +1,13 @@
 ////<reference path="../../ts/ui_common.ts" /> 
-//import '@typings/spotify-web-playback-sdk';
+
+interface WebplaybackError {
+    message : string
+}
 
 enum Repeat {
     NO_REPEAT = "off",
-    REPEAT = "context",
-    REPEAT_ONCE = "track"
+    REPEAT_ONCE = "track",
+    REPEAT = "context"
 }
 
 interface PlaybackParams {
@@ -21,12 +24,13 @@ class SeekBar {
     currentduration : number;
     onepercent : number;
     currenttimer : NodeJS.Timer;
-    timeractivated : boolean;
+    timeractivated : boolean = false;
 
     secondstimer : NodeJS.Timer;
     currenpositionseconds : number;
 
     constructor(bar : HTMLInputElement) {
+        this.timeractivated = false;
         this.seekbar = bar;
         this.seekbar.addEventListener("mouseup", (e) => {
             let value = e.target.value;
@@ -58,12 +62,12 @@ class SeekBar {
             this.currentposition = positionInMS;
             if (percentage) {
                 this.currentpercentage = percentage;
-                this.currenpositionseconds = Math.round((this.currentposition) / 1000);
             } else {
                 this.currentpercentage = Math.ceil(positionInMS / this.onepercent);
             }
             if (updateLabel) {
                 playbackcontroller.setCurrentTime(secondsToTimeString(Math.round((this.currentposition / 1000))));
+                this.currenpositionseconds = Math.round(this.currentposition / 1000);
             }
             this.seekbar.value = this.currentpercentage.toString();
         } else {
@@ -72,7 +76,7 @@ class SeekBar {
             if (updateLabel) {
                 playbackcontroller.setCurrentTime(playbackcontroller.timefull.innerHTML);
             }
-            this.deleteTimer();
+            this.timeractivated = false;
         }
     }
 
@@ -90,7 +94,7 @@ class SeekBar {
             if (this.timeractivated) {
                 playbackcontroller.setCurrentTime(secondsToTimeString(++this.currenpositionseconds));
             }
-        }, 1000);
+        }, 1100);
     }
 
     protected deleteTimer() {
@@ -127,6 +131,7 @@ class PlaybackController {
 
     shuffling : boolean;
     repeat : Repeat = Repeat.NO_REPEAT;
+    paused : boolean = true;
 
     constructor(sidebarEntry : Element) {
         this.sidebarentry = sidebarEntry;
@@ -183,13 +188,13 @@ class PlaybackController {
     play() {
         this.controls.children[2].children[0].innerHTML = "pause";
         this.seekbar.toggleTimer(true);
-        player.togglePlay();
+        this.paused = false;
     }
 
     pause() {
         this.controls.children[2].children[0].innerHTML = "play_arrow";
         this.seekbar.toggleTimer(false);
-        player.pause();
+        this.paused = true;
     }
 
     setCurrentTime(timestring : string) {
@@ -217,6 +222,13 @@ class PlaybackController {
             bttn.innerHTML = "repeat_one";
             bttn.style.color = "#8BC34A";
         }
+    }
+
+    displayError(message : WebplaybackError) {
+        this.setImg("../../assets/images/baseline-warning-24px.svg");
+        this.setTitle("Error");
+        this.setArtistAlbum(message.message, "");
+        this.pause();
     }
 }
 
@@ -250,19 +262,56 @@ function initPlayer() {
 
         player.addListener('player_state_changed', state => { 
             if (state) {
-            let track = state.track_window.current_track;
-            if (track.name != playbackcontroller.currenttrack) {
-                let params : PlaybackParams = {
-                    "name": track.name,
-                    "albumcoveruri": track.album.images[0].url,
-                    "albumname": track.album.name,
-                    "artists": track.artists
-                };
-                playbackcontroller.setNewParams(params);
-                let trackrequest = new SpotifyApiTrackRequest([track.id]);
-                trackrequest.execute(updatePlayerUI);
-            }
+                let track = state.track_window.current_track;
+                if (track.name != playbackcontroller.currenttrack) {
+                    let params : PlaybackParams = {
+                        "name": track.name,
+                        "albumcoveruri": track.album.images[0].url,
+                        "albumname": track.album.name,
+                        "artists": track.artists
+                    };
+                    playbackcontroller.setNewParams(params);
+                    let trackrequest = new SpotifyApiTrackRequest([track.id]);
+                    trackrequest.execute(updatePlayerUI);
+                }
+                if (state.paused !== playbackcontroller.paused) {
+                    if (state.paused) {
+                        playbackcontroller.pause();
+                    } else {
+                        playbackcontroller.play();
+                    }
+                }
+                if (state.shuffle !== playbackcontroller.shuffling) {
+                    playbackcontroller.shuffling = state.shuffle;
+                    playbackcontroller.setShuffle(state.shuffle);
+                }
+                let newrepeat : Repeat;
+                switch (state.repeat_mode) {
+                    case 0:
+                        newrepeat = Repeat.NO_REPEAT;
+                        break;
+                    case 2:
+                        newrepeat = Repeat.REPEAT_ONCE;
+                        break;
+                    default:
+                        newrepeat = Repeat.REPEAT;    
+                }
+                if (newrepeat !== playbackcontroller.repeat) {
+                    playbackcontroller.repeat = newrepeat;
+                    playbackcontroller.setRepeat(newrepeat);
+                }
+                if (state.position - 1500 < playbackcontroller.seekbar.currenpositionseconds || state.position + 1500 > playbackcontroller.seekbar.currenpositionseconds) {
+                    playbackcontroller.seekbar.toggleTimer(false);
+                    playbackcontroller.seekbar.seekToValue(state.position-900, null, true);
+                    if (!state.paused) {
+                        setTimeout(() => {playbackcontroller.seekbar.toggleTimer(true)},200);
+                    }
+                }
             }   
+        });
+
+        player.on('playback_error', ({ message }) => {
+            playbackcontroller.displayError(<WebplaybackError><unknown>message);
         });
     
         player.connect();
@@ -280,7 +329,6 @@ function updatePlayerUI(information : SpotifyApiRequestResult) {
     if (information.status == RequestStatus.RESOLVED) {
         let duration = information.result.duration_ms;
         playbackcontroller.seekbar.setParams(duration);
-        playbackcontroller.seekbar.toggleTimer(true);
         let seconds = Math.round(duration / 1000);
         playbackcontroller.setDuration(secondsToTimeString(seconds));
     }
@@ -304,10 +352,12 @@ function secondsToTimeString(seconds : number) : string {
 function setPlaybackState(ev : Event, playing? : boolean) {
     player.getCurrentState().then(res => {
         if (res.paused) {
-            playbackcontroller.play();
+            player.togglePlay();
+            playbackcontroller.play(true);
         } else {
-            playbackcontroller.pause();
-        }
+            player.pause();
+            playbackcontroller.pause(true);
+        } 
     });
 }
 
@@ -321,7 +371,7 @@ function previousTrack(ev : Event) {
 
 function setPosition(position : number) {
     player.seek(position);
-    playbackcontroller.seekbar.seekToValue(position, null, true);
+    playbackcontroller.seekbar.seekToValue(position, null, false);
 }
 
 function setShuffle() {

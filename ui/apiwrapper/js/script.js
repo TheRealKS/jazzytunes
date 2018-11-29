@@ -157,17 +157,16 @@ if (electron.remote.process.argv[0] !== "debug") {
     addLoadEvent(startAuthProcess);
 }
 ////<reference path="../../ts/ui_common.ts" /> 
-//import '@typings/spotify-web-playback-sdk';
 var Repeat;
-////<reference path="../../ts/ui_common.ts" /> 
-//import '@typings/spotify-web-playback-sdk';
 (function (Repeat) {
     Repeat["NO_REPEAT"] = "off";
-    Repeat["REPEAT"] = "context";
     Repeat["REPEAT_ONCE"] = "track";
+    Repeat["REPEAT"] = "context";
 })(Repeat || (Repeat = {}));
 class SeekBar {
     constructor(bar) {
+        this.timeractivated = false;
+        this.timeractivated = false;
         this.seekbar = bar;
         this.seekbar.addEventListener("mouseup", (e) => {
             let value = e.target.value;
@@ -197,13 +196,13 @@ class SeekBar {
             this.currentposition = positionInMS;
             if (percentage) {
                 this.currentpercentage = percentage;
-                this.currenpositionseconds = Math.round((this.currentposition) / 1000);
             }
             else {
                 this.currentpercentage = Math.ceil(positionInMS / this.onepercent);
             }
             if (updateLabel) {
                 playbackcontroller.setCurrentTime(secondsToTimeString(Math.round((this.currentposition / 1000))));
+                this.currenpositionseconds = Math.round(this.currentposition / 1000);
             }
             this.seekbar.value = this.currentpercentage.toString();
         }
@@ -213,7 +212,7 @@ class SeekBar {
             if (updateLabel) {
                 playbackcontroller.setCurrentTime(playbackcontroller.timefull.innerHTML);
             }
-            this.deleteTimer();
+            this.timeractivated = false;
         }
     }
     toggleTimer(state) {
@@ -229,7 +228,7 @@ class SeekBar {
             if (this.timeractivated) {
                 playbackcontroller.setCurrentTime(secondsToTimeString(++this.currenpositionseconds));
             }
-        }, 1000);
+        }, 1100);
     }
     deleteTimer() {
         if (this.currenttimer) {
@@ -245,6 +244,7 @@ class SeekBar {
 class PlaybackController {
     constructor(sidebarEntry) {
         this.repeat = Repeat.NO_REPEAT;
+        this.paused = true;
         this.sidebarentry = sidebarEntry;
         this.imgholder = this.sidebarentry.getElementsByClassName("cover_img")[0];
         this.titleholder = this.sidebarentry.getElementsByClassName("title")[0];
@@ -291,12 +291,12 @@ class PlaybackController {
     play() {
         this.controls.children[2].children[0].innerHTML = "pause";
         this.seekbar.toggleTimer(true);
-        player.togglePlay();
+        this.paused = false;
     }
     pause() {
         this.controls.children[2].children[0].innerHTML = "play_arrow";
         this.seekbar.toggleTimer(false);
-        player.pause();
+        this.paused = true;
     }
     setCurrentTime(timestring) {
         this.timecurrent.innerHTML = timestring;
@@ -324,6 +324,12 @@ class PlaybackController {
             bttn.innerHTML = "repeat_one";
             bttn.style.color = "#8BC34A";
         }
+    }
+    displayError(message) {
+        this.setImg("../../assets/images/baseline-warning-24px.svg");
+        this.setTitle("Error");
+        this.setArtistAlbum(message.message, "");
+        this.pause();
     }
 }
 var player;
@@ -364,7 +370,44 @@ function initPlayer() {
                     let trackrequest = new SpotifyApiTrackRequest([track.id]);
                     trackrequest.execute(updatePlayerUI);
                 }
+                if (state.paused !== playbackcontroller.paused) {
+                    if (state.paused) {
+                        playbackcontroller.pause();
+                    }
+                    else {
+                        playbackcontroller.play();
+                    }
+                }
+                if (state.shuffle !== playbackcontroller.shuffling) {
+                    playbackcontroller.shuffling = state.shuffle;
+                    playbackcontroller.setShuffle(state.shuffle);
+                }
+                let newrepeat;
+                switch (state.repeat_mode) {
+                    case 0:
+                        newrepeat = Repeat.NO_REPEAT;
+                        break;
+                    case 2:
+                        newrepeat = Repeat.REPEAT_ONCE;
+                        break;
+                    default:
+                        newrepeat = Repeat.REPEAT;
+                }
+                if (newrepeat !== playbackcontroller.repeat) {
+                    playbackcontroller.repeat = newrepeat;
+                    playbackcontroller.setRepeat(newrepeat);
+                }
+                if (state.position - 1500 < playbackcontroller.seekbar.currenpositionseconds || state.position + 1500 > playbackcontroller.seekbar.currenpositionseconds) {
+                    playbackcontroller.seekbar.toggleTimer(false);
+                    playbackcontroller.seekbar.seekToValue(state.position - 900, null, true);
+                    if (!state.paused) {
+                        setTimeout(() => { playbackcontroller.seekbar.toggleTimer(true); }, 200);
+                    }
+                }
             }
+        });
+        player.on('playback_error', ({ message }) => {
+            playbackcontroller.displayError(message);
         });
         player.connect();
     };
@@ -379,7 +422,6 @@ function updatePlayerUI(information) {
     if (information.status == RequestStatus.RESOLVED) {
         let duration = information.result.duration_ms;
         playbackcontroller.seekbar.setParams(duration);
-        playbackcontroller.seekbar.toggleTimer(true);
         let seconds = Math.round(duration / 1000);
         playbackcontroller.setDuration(secondsToTimeString(seconds));
     }
@@ -402,10 +444,12 @@ function secondsToTimeString(seconds) {
 function setPlaybackState(ev, playing) {
     player.getCurrentState().then(res => {
         if (res.paused) {
-            playbackcontroller.play();
+            player.togglePlay();
+            playbackcontroller.play(true);
         }
         else {
-            playbackcontroller.pause();
+            player.pause();
+            playbackcontroller.pause(true);
         }
     });
 }
@@ -417,7 +461,7 @@ function previousTrack(ev) {
 }
 function setPosition(position) {
     player.seek(position);
-    playbackcontroller.seekbar.seekToValue(position, null, true);
+    playbackcontroller.seekbar.seekToValue(position, null, false);
 }
 function setShuffle() {
     if (playbackcontroller.shuffling) {
@@ -454,6 +498,16 @@ function setRepeat() {
             playbackcontroller.setRepeat(playbackcontroller.repeat);
         }
     });
+}
+function t(chars, i, source, j) {
+    if (j == chars.length && i < chars.length) {
+    }
+    else if (i == chars.length - 1 && chars[i] == source[j]) {
+    }
+    else if (source[j] == chars[i]) {
+    }
+    else {
+    }
 }
 //Enum for all the different suburls(scopes) that can be used
 var Scopes;
