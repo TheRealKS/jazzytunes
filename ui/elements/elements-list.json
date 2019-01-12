@@ -53,5 +53,15 @@
         "name": "albumtrack",
         "uri": "\\elements\\albumtrack.html",
         "critical": true
+    },
+    {
+        "name": "artist",
+        "uri": "\\elements\\artist.html",
+        "critical": true
+    },
+    {
+        "name": "artist-content-small",
+        "uri": "\\elements\\artist_content_small.html",
+        "critical": true
     }
 ]

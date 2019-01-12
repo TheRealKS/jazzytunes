@@ -18,7 +18,8 @@ interface TrackData {
     name: string,
     duration: number,
     features : Array<string>,
-    track_no : number
+    track_no : number,
+    disc_no : number
 }
 
 interface TrackObjectDomtarget {
@@ -37,6 +38,8 @@ class AlbumView {
 
     tracks : Array<TrackData>;
     trackel : Array<HTMLDivElement>;
+
+    currentcreationoffset : number = 0;
 
     constructor(data : AlbumData) {
         this.data = data;
@@ -58,10 +61,16 @@ class AlbumView {
             let h = this.domTargetMain.appendChild(holder);
             for (var i = 0; i < this.trackel.length; i++) {
                 let l : Node = <Node>h.appendChild(this.trackel[i]);
+                let offset = this.tracks[i].track_no;
+                if (this.tracks[i].disc_no > 1) {
+                    offset = ++this.currentcreationoffset;
+                } else {
+                    this.currentcreationoffset++;
+                }
                 let o : ActionPayload = {
                     type: ActionType.PLAY,
                     contexttype: "album",
-                    contextparams: {offset: this.tracks[i].track_no},
+                    contextparams: {offset: offset},
                     uri: this.data.uri
                 };
                 let d : TrackObjectDomtarget = {
@@ -150,7 +159,8 @@ function createTracksDisplay(tracks : any) {
             name: item.name,
             duration: item.duration_ms,
             features: [],
-            track_no: item.track_number
+            track_no: item.track_number,
+            disc_no: item.disc_number
         };
 
         tracklist.push(o);

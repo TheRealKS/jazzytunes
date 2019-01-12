@@ -224,6 +224,8 @@ function attachEventListeners(a : SearchResults) {
             entry.domtargets.maintext.addEventListener("click", function() {
                 if (this.contexttype == "album") {
                     displayAlbum(this.id);
+                } else if (this.contexttype == "artist") {
+                    displayArtist(this.id);
                 } else if (this.contexttype == "track") {
                     //Open album
                 }
@@ -253,8 +255,19 @@ function buildQueryResults(result : SpotifyApiRequestResult) {
             let followers = current.followers.total;
             o.maintext = current.name;
             o.subtext = formatNumberString(followers.toString()) + " follower" + correctSsuffix(followers);
-            o.imagepayload = null;
-            o.maintextpayload = null;
+            let imagepayload : ActionPayload = {
+                "type": ActionType.PLAY,
+                "contexttype": "artist",
+                "uri": current.uri
+            };
+            let textpayload : ActionPayload = {
+                "type": ActionType.INTENT,
+                "contexttype": "artist",
+                "uri": current.uri,
+                id: current.id
+            };
+            o.imagepayload = imagepayload;
+            o.maintextpayload = textpayload;
             artistsarray.items.push(o);
         }
         var albumsarray : SearchresultsObject = {};

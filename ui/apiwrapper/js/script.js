@@ -1,6 +1,5 @@
 ////<reference path="../../ts/homepage.ts" /> 
 const electron = require('electron');
-const electronOauth2 = require('electron-oauth2');
 const remote = electron.remote;
 const BrowserWindow = remote.BrowserWindow;
 const OPERATIONMODE = "production";
@@ -156,7 +155,6 @@ function createProfile(result) {
 if (electron.remote.process.argv[0] !== "debug") {
     addLoadEvent(startAuthProcess);
 }
-////<reference path="../../ts/ui_common.ts" /> 
 var Repeat;
 (function (Repeat) {
     Repeat["NO_REPEAT"] = "off";
@@ -355,6 +353,7 @@ function initPlayer() {
             request.execute((result) => {
                 initializePlayerUI(player);
             });
+            createThumbbarButtons();
         });
         player.addListener('player_state_changed', state => {
             if (state) {
@@ -427,6 +426,9 @@ function updatePlayerUI(information) {
     }
 }
 function secondsToTimeString(seconds) {
+    if (seconds < 0) {
+        return "0:00";
+    }
     let minutes = 0;
     while (seconds > 59) {
         seconds -= 60;
@@ -499,19 +501,8 @@ function setRepeat() {
         }
     });
 }
-function t(chars, i, source, j) {
-    if (j == chars.length && i < chars.length) {
-    }
-    else if (i == chars.length - 1 && chars[i] == source[j]) {
-    }
-    else if (source[j] == chars[i]) {
-    }
-    else {
-    }
-}
 //Enum for all the different suburls(scopes) that can be used
 var Scopes;
-//Enum for all the different suburls(scopes) that can be used
 (function (Scopes) {
     Scopes[Scopes["albums"] = 0] = "albums";
     Scopes[Scopes["artists"] = 1] = "artists";
@@ -538,6 +529,28 @@ function test(id, tracks) {
     r.execute((result) => {
         console.log(result);
     });
+}
+var requestresults = {};
+var expectedrequests = 0;
+function runMultipleRequests(requests, callback) {
+    expectedrequests = Object.keys(requests).length;
+    for (var req in requests) {
+        requests[req].execute(processRequestCallback.bind(req));
+    }
+    awaitResolve(callback);
+}
+function processRequestCallback(e) {
+    requestresults[this] = e;
+}
+function awaitResolve(callback) {
+    if (Object.keys(requestresults).length < expectedrequests) {
+        setTimeout(function () { awaitResolve(this); }.bind(callback), 10);
+    }
+    else {
+        callback(requestresults);
+        requestresults = {};
+        expectedrequests = 0;
+    }
 }
 class SpotifyApiRequestResult {
     constructor(status, result, error) {
@@ -738,6 +751,8 @@ class SpotifyApiPutRequest {
     }
 }
 class SpotifyApiDeleteRequest {
+    execute() {
+    }
 }
 //#region All the subclasses for individual types of requests
 //SUBSECTION: Subclasses to retrieve data related to albums

@@ -3,7 +3,8 @@
         "outFile": "../js/script.js",
         "pretty": true,
         "target": "es6",
-        "module": "system",
+        "module": "amd",
+        "moduleResolution": "node",
         "sourceMap": true,
         "noImplicitAny": true,
         "composite": true

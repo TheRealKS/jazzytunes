@@ -1,0 +1,80 @@
+#!!!#artist#!!!#critical
+<template id="artist">
+    <style>
+        .artist {
+            margin-top: 0;
+            margin-left: -0.4vw;
+        }
+
+        .artist_header {
+            width: 100%;
+            position: sticky;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding-bottom: 1vh;
+            border-bottom: 1px solid black;
+        }
+
+        .artist_image {
+            margin-top: 1vh;
+            height: 20vh;
+            z-index: 999;
+            border-radius: 15vh;
+            box-shadow: #424242 0, 5px 0.5px 0.5px 0.5px;
+        }
+
+        .artist_information {
+            font-size: 2rem;
+            color: white;
+            text-align: center;
+        }
+
+        .artist_information span {
+            font-size: 1.2rem;
+            color: gray;
+        }
+
+        .artist_actions {
+            display: flex;
+            flex-direction: row;
+            margin-top: 1vh;
+        }
+
+        .button_act {
+            width: 10vw;
+            height: 4vh;
+            border-radius: 0.5vh;
+            background-color: #558B2F;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 1vw;
+        }
+        .right {
+            margin-right: 0;
+            margin-left: 1vw;
+        }
+
+        .artist_content {
+            width: 100%;
+            height: auto;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+        }
+    </style>
+    <div id="begincontent"></div>
+    <div class="artist">
+        <div class="artist_header">
+            <slot name="artist_image" class="artist_image"></slot>
+            <slot name="artist_information" class="artist_information"></slot>
+            <div class="artist_actions">
+                <div class="button_act">Play</div>
+                <div class="button_act right">Follow</div>
+            </div>
+        </div>
+        <div class="artist_content"></div>
+    </div>
+</template>

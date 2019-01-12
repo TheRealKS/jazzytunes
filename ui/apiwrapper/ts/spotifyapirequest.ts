@@ -35,6 +35,35 @@ function test(id, tracks) {
     });
 }
 
+interface SpotifyApiRequest {
+    execute : Function;
+}
+
+var requestresults : Object = {};
+var expectedrequests = 0;
+
+function runMultipleRequests(requests : {[key: string]: SpotifyApiRequest}, callback : Function) {
+    expectedrequests = Object.keys(requests).length;
+    for (var req in requests) {
+        requests[req].execute(processRequestCallback.bind(req));
+    }
+    awaitResolve(callback);
+}
+
+function processRequestCallback(e : SpotifyApiRequestResult) {
+    requestresults[this] = e;
+}
+
+function awaitResolve(callback : Function) {
+    if (Object.keys(requestresults).length < expectedrequests) {
+        setTimeout(function() {awaitResolve(this)}.bind(callback), 10);
+    } else {
+        callback(requestresults);
+        requestresults = {};
+        expectedrequests = 0;
+    }
+}
+
 class SpotifyApiRequestResult {
     status: RequestStatus = RequestStatus.UNRESOLVED;
     result: Object = null;
@@ -46,7 +75,7 @@ class SpotifyApiRequestResult {
     }
 }
 
-class SpotifyApiGetRequest {
+class SpotifyApiGetRequest implements SpotifyApiRequest {
     baseURL = "https://api.spotify.com/v1/"; //Base URL all requests use
     url: string;
     result: SpotifyApiRequestResult;
@@ -108,7 +137,7 @@ class SpotifyApiGetRequest {
     }
 }
 
-class SpotifyApiPostRequest {
+class SpotifyApiPostRequest implements SpotifyApiRequest {
     baseURL = "https://api.spotify.com/v1/"; //Base URL all requests use
     url: string;
     body: Object;
@@ -178,7 +207,7 @@ class SpotifyApiPostRequest {
     }
 }
 
-class SpotifyApiPutRequest {
+class SpotifyApiPutRequest implements SpotifyApiRequest {
     baseURL = "https://api.spotify.com/v1/"; //Base URL all requests use
     url: string;
     body: Object;
@@ -248,8 +277,10 @@ class SpotifyApiPutRequest {
     }
 }
 
-class SpotifyApiDeleteRequest {
+class SpotifyApiDeleteRequest implements SpotifyApiRequest {
+    execute() {
 
+    }
 }
 
 //#region All the subclasses for individual types of requests

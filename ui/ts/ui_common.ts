@@ -153,6 +153,22 @@ function span() {
     return document.createElement("span");
 }
 
+function determinePopularityString(popularity : number) {
+    if (popularity >= 90) {
+        return "Very";
+    } else if (popularity >= 70 && popularity < 90) {
+        return "Quite";
+    } else if (popularity >= 40 && popularity < 70) {
+        return "Moderately";
+    } else if (popularity >= 20 && popularity < 40) {
+        return "Underdog-ly";
+    } else if (popularity >= 0 && popularity < 20) {
+        return "Barely";
+    } else {
+        return "Unknown-ly";
+    }
+}
+
 addLoadEvent(function() {
     loader = <HTMLElement>stringToDom("<div id='loader' class='loader_holder'><div class='lds-facebook'><div></div><div></div><div></div></div></div>").firstChild;
 });

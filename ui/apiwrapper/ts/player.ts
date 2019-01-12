@@ -1,5 +1,3 @@
-////<reference path="../../ts/ui_common.ts" /> 
-
 interface WebplaybackError {
     message : string
 }
@@ -258,6 +256,8 @@ function initPlayer() {
             request.execute((result) => {
                 initializePlayerUI(player);
             });
+
+            createThumbbarButtons();
         });
 
         player.addListener('player_state_changed', state => { 
@@ -335,6 +335,7 @@ function updatePlayerUI(information : SpotifyApiRequestResult) {
 }
 
 function secondsToTimeString(seconds : number) : string {
+    if (seconds < 0) {return "0:00";}
     let minutes = 0;
     while (seconds > 59) {
         seconds -= 60;

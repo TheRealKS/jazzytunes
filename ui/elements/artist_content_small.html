@@ -1,0 +1,82 @@
+#!!!#artist-content-small#!!!#critical
+<template id="artist-content-small">
+    <style>
+        .artist_content_box {
+            color: white;
+            text-align: right;
+            padding-right: 1vw;
+            width: 47.5%;
+        }
+
+        .artist_content_box.right {
+            text-align: left;
+            padding-right: 0;
+            padding-left: 1vw;
+        }
+
+        .artist_content_item_small {
+            display: flex;
+            flex-direction: row-reverse;
+            align-items: center;
+            justify-content: space-between;
+            width: 102.5%;
+            margin-top: 2vh;
+            cursor: pointer;
+            margin-left: -1vw;
+        }
+
+        .artist_content_item_small:hover {
+            background-color: gray;
+        }
+
+        .artist_content_item_small img {
+            max-height: 6vh;
+            margin-left: 0.5vw;
+        }
+
+        .artist_content_item_small div {
+            margin-left: auto;
+            color: lightgrey;
+            font-size: 0.8rem
+        }
+
+        .artist_content_item_small div> :first-child {
+            font-size: 0.9rem;
+        }
+
+        .artist_content_item_small span {
+            margin-left: 1vw;
+        }
+
+        .align_left {
+            flex-direction: row;
+            margin-right: -1vw;
+            margin-left: 0;
+            width: 102.5%;
+        }
+
+        .align_left div {
+            margin-left: 0;
+            margin-right: auto;
+        }
+
+        .align_left img {
+            margin-left: 0;
+            margin-right: 0.5vw;
+        }
+
+        .align_left span {
+            margin-left: 0;
+            margin-right: 1vw;
+        }
+    </style>
+    <div id="begincontent"></div>
+    <div class="artist_content_item_small">
+        <slot name="item_image"></slot>
+        <div>
+            <slot name="item_text"></slot><br>
+            <slot name="item_subtext"></slot>
+        </div>
+        <slot name="item_aux"></slot>
+    </div>
+</template>
